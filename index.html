@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nexus Arcade</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+<div id="screen-home" class="screen active">
+<div class="topbar">
+<div class="profile-mini" onclick="App.go('profile')"><div class="avatar" id="home-avatar">?</div><div><div class="p-name" id="home-name">بازیکن</div><div class="p-sub">آنلاین</div></div></div>
+<div class="coin-badge">💎 <span id="home-coins">0</span></div>
+</div>
+<div class="hero"><div class="hero-title">NEXUS ARCADE</div><div class="hero-sub">دسته‌بندی را انتخاب کن و بازی کن</div></div>
+<div class="cat-scroll" id="category-scroll"></div>
+<div class="section-label" id="section-title">همه بازی‌ها</div>
+<div class="game-grid" id="game-grid"></div>
+<nav class="nav-bar">
+<button class="nav-btn active" data-screen="home"><span class="n-icon">🏠</span>خانه</button>
+<button class="nav-btn" data-screen="leaderboard"><span class="n-icon">🏆</span>رتبه‌بندی</button>
+<button class="nav-btn" data-screen="profile"><span class="n-icon">👤</span>پروفایل</button>
+<button class="nav-btn" data-screen="settings"><span class="n-icon">⚙️</span>تنظیمات</button>
+</nav>
+</div>
+<div id="screen-leaderboard" class="screen">
+<div class="topbar"><div style="font-size:16px;font-weight:900">🏆 جدول امتیازات</div><button class="btn-close" onclick="App.go('home')">×</button></div>
+<div class="lb-filters" id="lb-filters"></div>
+<div class="lb-list" id="lb-list"></div>
+</div>
+<div id="screen-profile" class="screen">
+<div class="topbar"><div style="font-size:16px;font-weight:900">👤 پروفایل</div><button class="btn-close" onclick="App.go('home')">×</button></div>
+<div class="profile-card">
+<div class="avatar big-avatar" id="prof-avatar">?</div>
+<div style="font-size:18px;font-weight:900" id="prof-name">بازیکن</div>
+<div class="profile-stats">
+<div class="stat-item"><div class="s-val" id="prof-games">0</div><div class="s-lbl">بازی</div></div>
+<div class="stat-item"><div class="s-val" id="prof-best">0</div><div class="s-lbl">رکورد</div></div>
+<div class="stat-item"><div class="s-val" id="prof-coins">0</div><div class="s-lbl">سکه</div></div>
+</div>
+</div>
+<div class="content-box"><h3>🎮 رکوردها</h3><div id="profile-games-list"></div></div>
+</div>
+<div id="screen-settings" class="screen">
+<div class="topbar"><div style="font-size:16px;font-weight:900">⚙️ تنظیمات</div><button class="btn-close" onclick="App.go('home')">×</button></div>
+<div class="settings-card">
+<div class="setting-row"><div><div class="setting-label">صدای بازی</div></div><div class="toggle" id="toggle-sound" onclick="App.toggleSetting('sound')"></div></div>
+<div class="setting-row"><div><div class="setting-label">لرزش</div></div><div class="toggle" id="toggle-haptics" onclick="App.toggleSetting('haptics')"></div></div>
+</div>
+<div class="content-box" style="text-align:center"><button class="btn btn-secondary" onclick="App.resetProgress()">حذف همه پیشرفت</button></div>
+</div>
+<div id="screen-game" class="screen no-nav">
+<div class="game-top"><div class="gt-title" id="game-title">بازی</div><button class="btn-close" onclick="App.quitGame()">×</button></div>
+<canvas id="game-canvas"></canvas>
+<div class="hud" id="game-hud"></div>
+<div class="overlay" id="game-overlay"></div>
+</div>
+</div>
+<div id="toast"></div>
+<div id="loading" class="loading-overlay"><div class="loader"></div><div class="loading-text">در حال بارگذاری...</div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="platform.js"></script>
+<script src="registry.js"></script>
+<script src="app.js"></script>
+</body>
+                                                                        </html>
