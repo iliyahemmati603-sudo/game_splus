@@ -1,23 +1,347 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مینی اپ سرگرمی</title>
-    <style>
-        body { font-family: Tahoma, sans-serif; text-align: center; padding: 50px; background: #f0f2f5; margin: 0; }
-        .card { background: white; padding: 40px 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        h1 { color: #2c3e50; }
-        p { color: #555; line-height: 1.6; }
-        .btn { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; margin-top: 20px; cursor: pointer; width: 100%; font-weight: bold;}
-        .btn:active { background: #0056b3; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GameS Plus</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0a0a0c;--card:#15151a;--blue:#00f3ff;--red:#ff003c;--green:#39ff14;--gold:#ffd700;--text:#fff;--muted:#888}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+body{background-color:var(--bg);background-image:linear-gradient(rgba(10,10,12,0.9),rgba(10,10,12,0.9)),repeating-linear-gradient(45deg,#111 25%,transparent 25%,transparent 75%,#111 75%,#111),repeating-linear-gradient(45deg,#111 25%,#0a0a0c 25%,#0a0a0c 75%,#111 75%,#111);background-size:20px 20px;color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+header{padding:15px 20px;display:flex;justify-content:space-between;align-items:center;background:rgba(21,21,26,0.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.05);position:sticky;top:0;z-index:10}
+.user-info{display:flex;align-items:center;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0055ff);display:flex;justify-content:center;align-items:center;font-weight:900;box-shadow:0 0 10px rgba(0,243,255,0.4)}
+.balance{background:rgba(0,243,255,0.1);border:1px solid var(--blue);padding:6px 14px;border-radius:20px;font-size:14px;color:var(--blue);box-shadow:0 0 8px rgba(0,243,255,0.2)}
+main{flex:1;padding:20px 20px 90px;overflow-y:auto}
+.section-title{font-size:16px;font-weight:900;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:18px;background:var(--red);border-radius:2px;box-shadow:0 0 8px var(--red)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border-radius:14px;padding:15px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;border:1px solid rgba(255,255,255,0.05);transition:.2s;cursor:pointer;position:relative;overflow:hidden}
+.card:active{transform:scale(.95)}
+.card-icon{font-size:32px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:700}
+.card-status{font-size:10px;color:var(--muted);margin-top:5px;background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:8px}
+.list-item{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:15px;border-radius:12px;margin-bottom:10px;border-right:3px solid var(--blue)}
+.rank{font-weight:900;color:var(--blue);font-size:16px}
+.score{font-weight:900;color:var(--green);font-size:16px}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(21,21,26,0.95);backdrop-filter:blur(10px);display:flex;justify-content:space-around;padding:12px 5px;border-top:1px solid rgba(255,255,255,0.05);z-index:10}
+.nav-btn{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-family:inherit;transition:.2s}
+.nav-btn.active{color:var(--blue);text-shadow:0 0 8px rgba(0,243,255,0.5)}
+.nav-btn svg{width:22px;height:22px;fill:currentColor}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(5px);z-index:100;display:none;flex-direction:column;justify-content:center;align-items:center}
+.modal-box{background:var(--card);width:92%;max-width:380px;padding:20px;border-radius:16px;border:1px solid var(--blue);text-align:center;position:relative}
+.close-btn{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--red);font-size:20px;font-weight:bold;cursor:pointer}
+.game-area{margin-top:15px}
+.btn{background:var(--bg);border:1px solid var(--blue);color:var(--blue);padding:12px;border-radius:10px;font-size:16px;width:100%;margin-top:10px;font-weight:bold;cursor:pointer}
+.btn:active{background:rgba(0,243,255,0.1)}
+.tree{font-size:70px;margin:15px 0;transition:.1s}
+.hidden{display:none!important}
+.input-field{width:100%;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#000;color:#fff;text-align:center;font-size:16px;margin-bottom:10px;outline:none}
+</style>
 </head>
 <body>
-    <div class="card">
-        <h1>🎉 مینی اپ فعال شد!</h1>
-        <p>این سایت روی گیت‌هاب میزبانی میشه و برای همه کاملاً باز و امن است.</p>
-        <button class="btn" onclick="alert('دکمه به درستی کار می‌کند!')">تست کلیک</button>
-    </div>
+
+<header>
+<div class="user-info">
+<div class="avatar" id="u-avatar">G</div>
+<div>
+<div id="u-name" style="font-size:14px;font-weight:700">بازیکن</div>
+<div style="font-size:11px;color:var(--green)">آنلاین</div>
+</div>
+</div>
+<div class="balance" id="u-score">0 سکه</div>
+</header>
+
+<main>
+<section id="tab-games">
+<div class="section-title">بازی‌های پلتفرم</div>
+<div class="grid" id="games-container"></div>
+</section>
+
+<section id="tab-rank" class="hidden">
+<div class="section-title">جدول رتبه‌بندی</div>
+<div id="rank-list"></div>
+</section>
+
+<section id="tab-alliance" class="hidden">
+<div class="section-title">اتحاد و تیم</div>
+<div class="card" style="padding:20px">
+    <p style="font-size:13px;margin-bottom:15px;color:var(--muted)">برای شرکت در بازی‌های گروهی و نبردها، یک اتحاد بساز یا به آن بپیوند.</p>
+    <input type="text" id="alliance-name" class="input-field" placeholder="نام اتحاد">
+    <button class="btn" onclick="createAlliance()">ساخت اتحاد</button>
+    <button class="btn" style="border-color:var(--green);color:var(--green)" onclick="joinAlliance()">پیوستن به اتحاد</button>
+</div>
+</section>
+
+<section id="tab-profile" class="hidden">
+<div class="section-title">آمار شما</div>
+<div class="card" style="align-items:flex-start;padding:20px">
+<p style="color:var(--muted);font-size:12px">بازی‌های انجام شده</p>
+<h2 style="color:var(--blue);margin-bottom:15px" id="p-games">0</h2>
+<p style="color:var(--muted);font-size:12px">مجموع سکه‌ها</p>
+<h2 style="color:var(--green)" id="p-score">0</h2>
+</div>
+</section>
+</main>
+
+<nav>
+<button class="nav-btn active" onclick="switchTab('games',this)">
+<svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2z"/></svg>بازی‌ها
+</button>
+<button class="nav-btn" onclick="switchTab('rank',this)">
+<svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>رتبه‌بندی
+</button>
+<button class="nav-btn" onclick="switchTab('alliance',this)">
+<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>اتحاد
+</button>
+<button class="nav-btn" onclick="switchTab('profile',this)">
+<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>پروفایل
+</button>
+</nav>
+
+<div class="modal" id="game-modal">
+<div class="modal-box">
+<button class="close-btn" onclick="closeGame()">✕</button>
+<div id="game-title" style="font-weight:900;font-size:16px;color:var(--blue)"></div>
+<div id="game-content" class="game-area"></div>
+</div>
+</div>
+
+<script>
+const API_URL = 'https://YOUR-CHABOKAN-URL/api'; 
+const tg = window.Telegram.WebApp;
+let userScore = 0, gamesPlayed = 0, currentUser = null;
+
+tg.ready(); tg.expand();
+
+const gamesList = [
+    { id: 'lumberjack', icon: '🪓', name: 'چوب‌بر', tag: 'سرعتی' },
+    { id: 'clicker', icon: '👆', name: 'ضربه‌زن', tag: 'سرعتی' },
+    { id: 'guess', icon: '🔢', name: 'حدس عدد', tag: 'فکری' },
+    { id: 'rps', icon: '✊', name: 'سنگ کاغذ قیچی', tag: 'شانسی' },
+    { id: 'coin', icon: '🪙', name: 'شیر یا خط', tag: 'شانسی' },
+    { id: 'math', icon: '🧮', name: 'محاسبه ریاضی', tag: 'فکری' },
+    { id: 'reaction', icon: '⚡', name: 'زمان واکنش', tag: 'سرعتی' },
+    { id: 'memory', icon: '🧠', name: 'حافظه', tag: 'فکری' },
+    { id: 'target', icon: '🎯', name: 'هدف‌زنی', tag: 'سرعتی' },
+    { id: 'dice', icon: '🎲', name: 'تاس', tag: 'شانسی' }
+];
+
+function renderGames() {
+    const container = document.getElementById('games-container');
+    container.innerHTML = gamesList.map(g => `
+        <div class="card" onclick="openGame('${g.id}')">
+            <div class="card-icon">${g.icon}</div>
+            <div class="card-title">${g.name}</div>
+            <div class="card-status">${g.tag}</div>
+        </div>
+    `).join('');
+}
+
+function updateUI() {
+    document.getElementById('u-score').innerText = userScore + ' سکه';
+    document.getElementById('p-score').innerText = userScore;
+    document.getElementById('p-games').innerText = gamesPlayed;
+}
+
+function addScore(amount) {
+    userScore += amount;
+    updateUI();
+    if(currentUser) {
+        fetch(`${API_URL}/score`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: tg.initData, score: amount })
+        });
+    }
+}
+
+function switchTab(tabId, btn) {
+    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('tab-' + tabId).classList.remove('hidden');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if(tabId === 'rank') fetchLeaderboard();
+}
+
+function openGame(id) {
+    const modal = document.getElementById('game-modal');
+    const title = document.getElementById('game-title');
+    const content = document.getElementById('game-content');
+    modal.style.display = 'flex';
+    content.innerHTML = '';
+    gamesPlayed++; updateUI();
+
+    if(id === 'lumberjack') {
+        title.innerText = 'چوب‌بر'; let score = 0, isDead = false;
+        content.innerHTML = `<div class="tree" id="tree">🌳</div><div style="display:flex;gap:10px"><button class="btn" onclick="window.chop('left')">◀</button><button class="btn" onclick="window.chop('right')">▶</button></div><div id="g-score" style="margin-top:15px;font-weight:bold;color:var(--green)">امتیاز: 0</div>`;
+        window.chop = (dir) => {
+            if(isDead) return; const tree = document.getElementById('tree');
+            if(Math.random() > 0.2) {
+                score++; document.getElementById('g-score').innerText = 'امتیاز: ' + score;
+                tree.style.transform = `rotate(${dir==='left'?'-10':'10'}deg)`; setTimeout(()=>tree.style.transform='rotate(0deg)',100);
+                addScore(1);
+            } else { isDead = true; tree.innerText = '🪵'; document.getElementById('g-score').innerText = 'باختی! امتیاز: ' + score; setTimeout(closeGame, 1500); }
+        };
+    }
+    else if(id === 'clicker') {
+        title.innerText = 'ضربه‌زن'; let score = 0, time = 10;
+        content.innerHTML = `<div style="font-size:50px;margin:15px 0;cursor:pointer" id="coin" onclick="window.doClick()">🪙</div><div id="g-score" style="font-weight:bold;color:var(--green)">امتیاز: 0</div><div id="g-time" style="margin-top:10px;color:var(--red)">زمان: 10</div>`;
+        window.doClick = () => { if(time > 0) { score++; document.getElementById('g-score').innerText = 'امتیاز: ' + score; addScore(1); } };
+        let timer = setInterval(() => { time--; document.getElementById('g-time').innerText = 'زمان: ' + time; if(time<=0) { clearInterval(timer); setTimeout(closeGame, 1000); } }, 1000);
+        window.onCloseGame = () => clearInterval(timer);
+    }
+    else if(id === 'guess') {
+        title.innerText = 'حدس عدد'; let target = Math.floor(Math.random()*10)+1;
+        content.innerHTML = `<p style="font-size:12px;color:var(--muted);margin-bottom:10px">عددی بین ۱ تا ۱۰</p><input type="number" id="inp" class="input-field" min="1" max="10"><button class="btn" onclick="window.doGuess()">تایید</button><div id="msg" style="margin-top:10px;font-weight:bold"></div>`;
+        window.doGuess = () => {
+            const v = parseInt(document.getElementById('inp').value); const m = document.getElementById('msg');
+            if(v === target) { m.style.color='var(--green)'; m.innerText='درست بود!'; addScore(10); setTimeout(closeGame, 1000); }
+            else { m.style.color='var(--red)'; m.innerText='اشتباهه!'; }
+        };
+    }
+    else if(id === 'rps') {
+        title.innerText = 'سنگ کاغذ قیچی';
+        content.innerHTML = `<div style="display:flex;gap:15px;justify-content:center;margin:20px 0"><button class="btn" style="font-size:30px" onclick="window.playRps('✊')">✊</button><button class="btn" style="font-size:30px" onclick="window.playRps('✋')">✋</button><button class="btn" style="font-size:30px" onclick="window.playRps('✌️')">✌️</button></div><div id="msg" style="font-weight:bold;margin-top:15px"></div>`;
+        window.playRps = (choice) => {
+            const opts = ['✊','✋','✌️']; const bot = opts[Math.floor(Math.random()*3)]; const m = document.getElementById('msg');
+            if(choice === bot) { m.innerText = `مساوی! (${bot})`; m.style.color='var(--muted)'; }
+            else if((choice==='✊'&&bot==='✌️')||(choice==='✋'&&bot==='✊')||(choice==='✌️'&&bot==='✋')) { m.innerText = `بردی! (${bot})`; m.style.color='var(--green)'; addScore(2); }
+            else { m.innerText = `باختی! (${bot})`; m.style.color='var(--red)'; }
+        };
+    }
+    else if(id === 'coin') {
+        title.innerText = 'شیر یا خط';
+        content.innerHTML = `<div style="font-size:60px;margin:20px 0" id="coin-vis">🪙</div><div style="display:flex;gap:10px"><button class="btn" onclick="window.flip('شیر')">شیر</button><button class="btn" onclick="window.flip('خط')">خط</button></div><div id="msg" style="margin-top:15px;font-weight:bold"></div>`;
+        window.flip = (choice) => {
+            const res = Math.random() > 0.5 ? 'شیر' : 'خط'; const m = document.getElementById('msg');
+            if(choice === res) { m.innerText = `بردی! ${res} اومد.`; m.style.color='var(--green)'; addScore(2); }
+            else { m.innerText = `باختی! ${res} اومد.`; m.style.color='var(--red)'; }
+        };
+    }
+    else if(id === 'math') {
+        title.innerText = 'محاسبه ریاضی';
+        const a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1, op = Math.random()>0.5?'+':'-';
+        const ans = op==='+'?a+b:a-b;
+        content.innerHTML = `<h2 style="margin:15px 0;font-size:24px">${a} ${op} ${b} = ?</h2><input type="number" id="inp" class="input-field"><button class="btn" onclick="window.doMath(${ans})">تایید</button>`;
+        window.doMath = (correct) => {
+            const v = parseInt(document.getElementById('inp').value);
+            if(v === correct) { addScore(5); closeGame(); } else { alert('اشتباه بود!'); }
+        };
+    }
+    else if(id === 'reaction') {
+        title.innerText = 'زمان واکنش'; let start = 0;
+        content.innerHTML = `<div id="react-box" style="width:100%;height:150px;background:var(--red);border-radius:10px;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;margin-top:10px">منتظر بمان...</div>`;
+        const box = document.getElementById('react-box');
+        setTimeout(() => { box.style.background = 'var(--green)'; box.innerText = 'کلیک کن!'; start = Date.now(); }, Math.random()*3000 + 2000);
+        box.onclick = () => {
+            if(start === 0) { box.innerText = 'خیلی زود زدی!'; box.style.background = 'var(--red)'; }
+            else { const t = Date.now() - start; box.innerText = `زمان شما: ${t} میلی‌ثانیه`; addScore(Math.max(1, Math.floor(1000/t)*2)); setTimeout(closeGame, 2000); }
+        };
+    }
+    else if(id === 'memory') {
+        title.innerText = 'حافظه'; const emojis = ['🍎','🍌','🍇','🍉'];
+        const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+        let opened = [], matched = 0;
+        content.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px">${cards.map((c,i)=>`<div class="card" id="mem-${i}" style="height:60px;font-size:24px" onclick="window.flipCard(${i},'${c}')"></div>`).join('')}</div>`;
+        window.flipCard = (i, c) => {
+            const el = document.getElementById(`mem-${i}`);
+            if(el.innerText !== '') return; el.innerText = c;
+            opened.push({i, c});
+            if(opened.length === 2) {
+                if(opened[0].c === opened[1].c) { matched++; addScore(3); opened = []; if(matched === 4) setTimeout(closeGame, 1000); }
+                else { setTimeout(() => { document.getElementById(`mem-${opened[0].i}`).innerText=''; document.getElementById(`mem-${opened[1].i}`).innerText=''; opened = []; }, 800); }
+            }
+        };
+    }
+    else if(id === 'target') {
+        title.innerText = 'هدف‌زنی'; let score = 0, time = 15;
+        content.innerHTML = `<div id="t-time" style="color:var(--red);font-weight:bold">زمان: 15</div><div id="t-area" style="position:relative;width:100%;height:200px;background:#000;border-radius:10px;margin-top:10px;overflow:hidden"></div>`;
+        const area = document.getElementById('t-area');
+        const spawn = () => {
+            if(time <= 0) return;
+            const t = document.createElement('div');
+            t.innerText = '🎯'; t.style.position = 'absolute'; t.style.fontSize = '30px'; t.style.cursor = 'pointer';
+            t.style.left = Math.random() * 80 + '%'; t.style.top = Math.random() * 80 + '%';
+            t.onclick = () => { t.remove(); score++; addScore(1); spawn(); };
+            area.appendChild(t);
+            setTimeout(() => { if(t.parentNode) t.remove(); }, 1000);
+        };
+        spawn();
+        let timer = setInterval(() => { time--; document.getElementById('t-time').innerText = 'زمان: ' + time; if(time <= 0) { clearInterval(timer); closeGame(); } }, 1000);
+        window.onCloseGame = () => clearInterval(timer);
+    }
+    else if(id === 'dice') {
+        title.innerText = 'تاس'; let faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+        content.innerHTML = `<div style="font-size:80px;margin:20px 0" id="dice">🎲</div><button class="btn" onclick="window.roll()">پرتاب تاس</button><div id="msg" style="margin-top:15px;font-weight:bold"></div>`;
+        window.roll = () => {
+            const n = Math.floor(Math.random()*6); document.getElementById('dice').innerText = faces[n];
+            if(n === 5) { document.getElementById('msg').innerText = 'شش آوردی! ۱۰ سکه'; addScore(10); }
+            else { document.getElementById('msg').innerText = 'دوباره تلاش کن'; }
+        };
+    }
+}
+
+function closeGame() {
+    document.getElementById('game-modal').style.display = 'none';
+    if(window.onCloseGame) window.onCloseGame();
+}
+
+async function fetchLeaderboard() {
+    try {
+        const res = await fetch(`${API_URL}/leaderboard`);
+        const data = await res.json();
+        document.getElementById('rank-list').innerHTML = data.map((u, i) => `
+            <div class="list-item" style="${i===0?'border-right-color:gold':i===1?'border-right-color:silver':i===2?'border-right-color:#cd7f32':''}">
+                <div style="display:flex;gap:15px"><span class="rank">${i+1}</span><span>${u.first_name}</span></div>
+                <span class="score">${u.score}</span>
+            </div>
+        `).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function createAlliance() {
+    const name = document.getElementById('alliance-name').value;
+    if(!name) return alert('نام اتحاد را وارد کنید');
+    fetch(`${API_URL}/alliance/create`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ initData: tg.initData, name })
+    }).then(r => r.json()).then(d => alert(d.message));
+}
+
+async function joinAlliance() {
+    const name = document.getElementById('alliance-name').value;
+    if(!name) return alert('نام اتحاد را وارد کنید');
+    fetch(`${API_URL}/alliance/join`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ initData: tg.initData, name })
+    }).then(r => r.json()).then(d => alert(d.message));
+}
+
+async function init() {
+    if(tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
+        document.getElementById('u-avatar').innerText = tg.initDataUnsafe.user.first_name.charAt(0);
+        try {
+            const res = await fetch(`${API_URL}/auth`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ initData: tg.initData })
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                currentUser = data.user;
+                userScore = currentUser.score;
+                gamesPlayed = currentUser.games_played;
+                updateUI();
+            }
+        } catch(e) {}
+    }
+    renderGames();
+}
+
+init();
+</script>
 </body>
-</html>
+    </html>
