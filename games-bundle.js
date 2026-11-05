@@ -5859,3 +5859,1261 @@ window.Game_tower = class extends GameBase {
         if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
     }
 };
+window.Game_solitaire = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        const padding = 15;
+        const availW = this.w - padding * 2;
+        this.cardW = Math.floor((availW - 6 * 10) / 7);
+        this.cardH = Math.floor(this.cardW * 1.5);
+        this.gapX = 10;
+        this.gapY = 8;
+        this.topY = 80;
+        this.tableauY = this.topY + this.cardH + 30;
+        this.suits = ['♠', '♥', '♦', '♣'];
+        this.ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'won') {
+                this.startGame();
+                return;
+            }
+            if (this.state !== 'playing') {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.handleClick(e.clientX - r.left, e.clientY - r.top);
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.deck = [];
+        this.stock = [];
+        this.waste = [];
+        this.foundations = [[], [], [], []];
+        this.tableau = [[], [], [], [], [], [], []];
+        this.selected = null;
+        this.score = 0;
+        this.moves = 0;
+
+        for (let s = 0; s < 4; s++) {
+            for (let r = 0; r < 13; r++) {
+                this.deck.push({ suit: s, rank: r, faceUp: false });
+            }
+        }
+        
+        this.deck.sort(() => Math.random() - 0.5);
+
+        let idx = 0;
+        for (let i = 0; i < 7; i++) {
+            for (let j = 0; j <= i; j++) {
+                const card = this.deck[idx++];
+                card.faceUp = (j === i);
+                this.tableau[i].push(card);
+            }
+        }
+        
+        while (idx < this.deck.length) {
+            this.stock.push(this.deck[idx++]);
+        }
+        
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">حرکت ${this.moves}</div>
+        `);
+    }
+
+    handleClick(x, y) {
+        if (this.selected) {
+            if (this.tryMove(x, y)) {
+                this.selected = null;
+                this.moves++;
+                this.checkWin();
+                this.updateHud();
+                return;
+            }
+            this.selected = null;
+        }
+
+        for (let i = 0; i < 7; i++) {
+            const pile = this.tableau[i];
+            for (let j = pile.length - 1; j >= 0; j--) {
+                const card = pile[j];
+                if (!card.faceUp) {
+                    continue;
+                }
+                const cx = 15 + i * (this.cardW + this.gapX);
+                let cy = this.tableauY;
+                for (let k = 0; k < j; k++) {
+                    cy += pile[k].faceUp ? 30 : 12;
+                }
+                
+                if (x >= cx && x <= cx + this.cardW && y >= cy && y <= cy + this.cardH) {
+                    this.selected = { type: 'tableau', pIndex: i, cIndex: j };
+                    AudioEngine.tone(600, 0.05, 'sine', 0.1);
+                    return;
+                }
+            }
+        }
+
+        for (let i = 0; i < this.waste.length; i++) {
+            const card = this.waste[i];
+            const cx = 15 + (this.cardW + this.gapX);
+            const cy = this.topY;
+            if (x >= cx && x <= cx + this.cardW && y >= cy && y <= cy + this.cardH) {
+                this.selected = { type: 'waste', cIndex: i };
+                AudioEngine.tone(600, 0.05, 'sine', 0.1);
+                return;
+            }
+        }
+
+        const stockX = 15;
+        const stockY = this.topY;
+        if (x >= stockX && x <= stockX + this.cardW && y >= stockY && y <= stockY + this.cardH) {
+            if (this.stock.length === 0) {
+                if (this.waste.length > 0) {
+                    this.stock = this.waste.reverse();
+                    this.waste = [];
+                    this.stock.forEach(c => c.faceUp = false);
+                    AudioEngine.tone(300, 0.1, 'triangle', 0.1);
+                }
+            } else {
+                const card = this.stock.pop();
+                card.faceUp = true;
+                this.waste.push(card);
+                AudioEngine.tone(700, 0.05, 'sine', 0.1);
+            }
+        }
+    }
+
+    tryMove(x, y) {
+        let movingCards = [];
+        let sourceType = '';
+        let sourceIdx = 0;
+        let sourceCardIdx = 0;
+
+        if (this.selected.type === 'waste') {
+            movingCards = [this.waste[this.selected.cIndex]];
+            sourceType = 'waste';
+        } else if (this.selected.type === 'tableau') {
+            movingCards = this.tableau[this.selected.pIndex].slice(this.selected.cIndex);
+            sourceType = 'tableau';
+            sourceIdx = this.selected.pIndex;
+            sourceCardIdx = this.selected.cIndex;
+        }
+
+        const firstCard = movingCards[0];
+
+        for (let i = 0; i < 4; i++) {
+            const fX = this.w - 15 - (4 - i) * (this.cardW + this.gapX) + this.gapX;
+            const fY = this.topY;
+            if (x >= fX - 20 && x <= fX + this.cardW + 20 && y >= fY - 20 && y <= fY + this.cardH + 20) {
+                if (movingCards.length > 1) {
+                    return false;
+                }
+                const pile = this.foundations[i];
+                let valid = false;
+                
+                if (pile.length === 0) {
+                    if (firstCard.rank === 0) valid = true;
+                } else {
+                    const top = pile[pile.length - 1];
+                    if (top.suit === firstCard.suit && top.rank === firstCard.rank - 1) {
+                        valid = true;
+                    }
+                }
+
+                if (valid) {
+                    pile.push(firstCard);
+                    this.removeCards(sourceType, sourceIdx, sourceCardIdx);
+                    this.score += 15;
+                    AudioEngine.win();
+                    Haptics.success();
+                    Particles.burst(fX + this.cardW / 2, fY + this.cardH / 2, 15, { color: '#2bff88', minSpeed: 50, maxSpeed: 200 });
+                    return true;
+                }
+            }
+        }
+
+        for (let i = 0; i < 7; i++) {
+            const tX = 15 + i * (this.cardW + this.gapX);
+            const pile = this.tableau[i];
+            let tY = this.tableauY;
+            for (let k = 0; k < pile.length; k++) {
+                tY += pile[k].faceUp ? 30 : 12;
+            }
+            
+            if (x >= tX - 30 && x <= tX + this.cardW + 30 && y >= tY - 30) {
+                let valid = false;
+                if (pile.length === 0) {
+                    if (firstCard.rank === 12) valid = true;
+                } else {
+                    const top = pile[pile.length - 1];
+                    if (top.faceUp) {
+                        const isRed = (firstCard.suit === 1 || firstCard.suit === 2);
+                        const isTopRed = (top.suit === 1 || top.suit === 2);
+                        if (isRed !== isTopRed && top.rank === firstCard.rank + 1) {
+                            valid = true;
+                        }
+                    }
+                }
+
+                if (valid) {
+                    pile.push(...movingCards);
+                    this.removeCards(sourceType, sourceIdx, sourceCardIdx);
+                    this.score += 5;
+                    AudioEngine.tone(500, 0.08, 'sine', 0.1);
+                    Haptics.light();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    removeCards(type, pIdx, cIdx) {
+        if (type === 'waste') {
+            this.waste.pop();
+        } else if (type === 'tableau') {
+            this.tableau[pIdx].splice(cIdx);
+            if (this.tableau[pIdx].length > 0) {
+                const last = this.tableau[pIdx][this.tableau[pIdx].length - 1];
+                if (!last.faceUp) {
+                    last.faceUp = true;
+                    AudioEngine.tone(800, 0.05, 'sine', 0.1);
+                }
+            }
+        }
+    }
+
+    checkWin() {
+        if (this.foundations.every(f => f.length === 13)) {
+            this.state = 'won';
+            AudioEngine.win();
+            Haptics.success();
+            Camera.add(1);
+            setTimeout(() => {
+                App.gameOver('solitaire', this.score + 1000);
+            }, 1500);
+        }
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('SOLITAIRE', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        const drawSlot = (x, y, sym) => {
+            ctx.fillStyle = 'rgba(0,229,255,0.05)';
+            ctx.strokeStyle = 'rgba(0,229,255,0.2)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, y, this.cardW, this.cardH, 6);
+            else ctx.rect(x, y, this.cardW, this.cardH);
+            ctx.fill();
+            ctx.stroke();
+            if (sym) {
+                ctx.fillStyle = 'rgba(0,229,255,0.2)';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(sym, x + this.cardW / 2, y + this.cardH / 2);
+            }
+        };
+
+        drawSlot(15, this.topY, '↻');
+        for (let i = 0; i < 4; i++) {
+            const fX = this.w - 15 - (4 - i) * (this.cardW + this.gapX) + this.gapX;
+            drawSlot(fX, this.topY, '♠');
+        }
+        for (let i = 0; i < 7; i++) {
+            drawSlot(15 + i * (this.cardW + this.gapX), this.tableauY, 'K');
+        }
+
+        if (this.stock.length > 0) {
+            this.drawCard(ctx, this.stock[this.stock.length - 1], 15, this.topY, false);
+        }
+
+        for (let i = 0; i < this.waste.length; i++) {
+            const isSel = this.selected && this.selected.type === 'waste' && this.selected.cIndex === i;
+            this.drawCard(ctx, this.waste[i], 15 + (this.cardW + this.gapX), this.topY, isSel);
+        }
+
+        for (let i = 0; i < 4; i++) {
+            const pile = this.foundations[i];
+            if (pile.length > 0) {
+                const fX = this.w - 15 - (4 - i) * (this.cardW + this.gapX) + this.gapX;
+                this.drawCard(ctx, pile[pile.length - 1], fX, this.topY, false);
+            }
+        }
+
+        for (let i = 0; i < 7; i++) {
+            const pile = this.tableau[i];
+            const tX = 15 + i * (this.cardW + this.gapX);
+            let tY = this.tableauY;
+            
+            for (let j = 0; j < pile.length; j++) {
+                const card = pile[j];
+                const isSel = this.selected && this.selected.type === 'tableau' && this.selected.pIndex === i && j >= this.selected.cIndex;
+                this.drawCard(ctx, card, tX, tY, isSel);
+                tY += card.faceUp ? 30 : 12;
+            }
+        }
+
+        Particles.render(ctx);
+        Camera.reset(ctx);
+    }
+
+    drawCard(ctx, card, x, y, isSelected) {
+        ctx.save();
+        
+        if (isSelected) {
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 20;
+            y -= 10;
+        } else {
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetY = 2;
+        }
+
+        if (!card.faceUp) {
+            const g = ctx.createLinearGradient(x, y, x + this.cardW, y + this.cardH);
+            g.addColorStop(0, '#111a2e');
+            g.addColorStop(1, '#0c1120');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, y, this.cardW, this.cardH, 6);
+            else ctx.rect(x, y, this.cardW, this.cardH);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = 'rgba(0,229,255,0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'rgba(0,229,255,0.1)';
+            ctx.beginPath();
+            ctx.arc(x + this.cardW / 2, y + this.cardH / 2, this.cardW / 4, 0, 6.28);
+            ctx.fill();
+        } else {
+            const g = ctx.createLinearGradient(x, y, x, y + this.cardH);
+            g.addColorStop(0, '#ffffff');
+            g.addColorStop(1, '#e0e5ec');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, y, this.cardW, this.cardH, 6);
+            else ctx.rect(x, y, this.cardW, this.cardH);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            const isRed = card.suit === 1 || card.suit === 2;
+            ctx.fillStyle = isRed ? '#ff2d78' : '#111';
+            
+            ctx.font = `bold ${Math.floor(this.cardW * 0.25)}px Tahoma`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(this.ranks[card.rank], x + 5, y + 5);
+            
+            ctx.font = `${Math.floor(this.cardW * 0.25)}px Arial`;
+            ctx.fillText(this.suits[card.suit], x + 5, y + 5 + this.cardW * 0.25);
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.font = `bold ${Math.floor(this.cardW * 0.25)}px Tahoma`;
+            ctx.fillText(this.ranks[card.rank], x + this.cardW - 5, y + this.cardH - 5);
+            
+            ctx.font = `${Math.floor(this.cardW * 0.25)}px Arial`;
+            ctx.fillText(this.suits[card.suit], x + this.cardW - 5, y + this.cardH - 5 - this.cardW * 0.25);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `${Math.floor(this.cardW * 0.5)}px Arial`;
+            ctx.globalAlpha = 0.8;
+            ctx.fillText(this.suits[card.suit], x + this.cardW / 2, y + this.cardH / 2);
+            ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+    }
+};
+
+window.Game_stack = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.baseW = Math.min(this.w * 0.6, 260);
+        this.baseH = 35;
+        this.cameraY = 0;
+        this.targetCameraY = 0;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+            } else if (this.state === 'playing') {
+                this.dropBlock();
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._key = (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                if (this.state === 'menu' || this.state === 'dead') {
+                    this.startGame();
+                } else if (this.state === 'playing') {
+                    this.dropBlock();
+                }
+            }
+        };
+        window.addEventListener('keydown', this._key);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.score = 0;
+        this.combo = 0;
+        this.tower = [];
+        this.cameraY = 0;
+        this.targetCameraY = 0;
+
+        const colors = ['#00e5ff', '#ff2d78', '#ffc531', '#a855f7', '#2bff88'];
+        
+        this.tower.push({
+            x: (this.w - this.baseW) / 2,
+            y: this.h - 100,
+            w: this.baseW,
+            color: colors[0]
+        });
+
+        this.currentBlock = {
+            x: 0,
+            w: this.baseW,
+            color: colors[1],
+            dir: 1,
+            speed: 280
+        };
+
+        this.updateHud();
+    }
+
+    spawnBlock() {
+        const last = this.tower[this.tower.length - 1];
+        const colors = ['#00e5ff', '#ff2d78', '#ffc531', '#a855f7', '#2bff88'];
+        this.currentBlock = {
+            x: Math.random() < 0.5 ? 0 : this.w - last.w,
+            w: last.w,
+            color: colors[this.tower.length % colors.length],
+            dir: Math.random() < 0.5 ? 1 : -1,
+            speed: 280 + this.tower.length * 18
+        };
+    }
+
+    dropBlock() {
+        if (this.state !== 'playing') {
+            return;
+        }
+        const last = this.tower[this.tower.length - 1];
+        const cb = this.currentBlock;
+
+        const overlapLeft = Math.max(cb.x, last.x);
+        const overlapRight = Math.min(cb.x + cb.w, last.x + last.w);
+        const overlap = overlapRight - overlapLeft;
+
+        if (overlap <= 0) {
+            return this.gameOver();
+        }
+
+        const isPerfect = Math.abs(cb.x - last.x) < 8;
+        let finalX = cb.x;
+        let finalW = cb.w;
+
+        if (isPerfect) {
+            finalX = last.x;
+            finalW = last.w;
+            this.combo++;
+            AudioEngine.win();
+            Haptics.success();
+            Camera.add(0.2);
+            
+            for (let i = 0; i < 20; i++) {
+                Particles.burst(finalX + finalW / 2, last.y - this.baseH, 2, {
+                    color: '#fff',
+                    minSpeed: 100,
+                    maxSpeed: 300,
+                    gravity: 200
+                });
+            }
+        } else {
+            this.combo = 0;
+            finalX = overlapLeft;
+            finalW = overlap;
+            AudioEngine.tone(400, 0.1, 'square', 0.1);
+            Haptics.medium();
+            Camera.add(0.4);
+        }
+
+        this.score += 10 + (this.combo * 5);
+
+        const newY = last.y - this.baseH;
+        this.tower.push({
+            x: finalX,
+            y: newY,
+            w: finalW,
+            color: cb.color
+        });
+
+        const chop = cb.w - finalW;
+        if (chop > 0) {
+            const fallingX = cb.x > finalX ? finalX + finalW : finalX - chop;
+            Particles.burst(fallingX + chop / 2, newY, 25, {
+                color: cb.color,
+                minSpeed: 100,
+                maxSpeed: 400,
+                gravity: 800,
+                minSize: 5,
+                maxSize: 12
+            });
+        }
+
+        this.targetCameraY = Math.max(0, (this.tower.length - 6) * this.baseH);
+
+        if (finalW <= 5) {
+            return this.gameOver();
+        }
+
+        this.spawnBlock();
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">ارتفاع <b>${this.tower.length}</b></div>
+        `);
+    }
+
+    gameOver() {
+        this.state = 'dead';
+        AudioEngine.lose();
+        Haptics.heavy();
+        Camera.add(1.5);
+        
+        if (this.currentBlock) {
+            Particles.burst(this.currentBlock.x + this.currentBlock.w / 2, 100, 50, {
+                color: this.currentBlock.color,
+                minSpeed: 150,
+                maxSpeed: 600,
+                gravity: 600
+            });
+        }
+        
+        setTimeout(() => {
+            App.gameOver('stack', this.score, { height: this.tower.length });
+        }, 800);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        this.cameraY = lerp(this.cameraY, this.targetCameraY, dt * 5);
+
+        if (this.state !== 'playing') {
+            return;
+        }
+
+        const cb = this.currentBlock;
+        cb.x += cb.speed * cb.dir * dt;
+
+        if (cb.x < 0) {
+            cb.x = 0;
+            cb.dir = 1;
+        }
+        if (cb.x + cb.w > this.w) {
+            cb.x = this.w - cb.w;
+            cb.dir = -1;
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#ffc531';
+            ctx.font = 'bold 38px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 30;
+            ctx.fillText('TOWER STACK', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        ctx.translate(0, this.cameraY);
+
+        for (let i = 0; i < this.tower.length; i++) {
+            const b = this.tower[i];
+            const g = ctx.createLinearGradient(b.x, b.y, b.x + b.w, b.y + this.baseH);
+            g.addColorStop(0, b.color);
+            g.addColorStop(1, 'rgba(0,0,0,0.6)');
+            
+            ctx.fillStyle = g;
+            ctx.shadowColor = b.color;
+            ctx.shadowBlur = i === this.tower.length - 1 ? 25 : 5;
+            
+            ctx.fillRect(b.x, b.y, b.w, this.baseH);
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(b.x, b.y, b.w, 4);
+            ctx.shadowBlur = 0;
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(b.x, b.y, b.w, this.baseH);
+        }
+
+        if (this.state === 'playing' && this.currentBlock) {
+            const cb = this.currentBlock;
+            const nextY = this.tower[this.tower.length - 1].y - this.baseH;
+            
+            ctx.fillStyle = cb.color;
+            ctx.shadowColor = cb.color;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(cb.x, nextY, cb.w, this.baseH);
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillRect(cb.x, nextY, cb.w, 4);
+            ctx.shadowBlur = 0;
+            
+            if (this.combo > 0) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 18px Tahoma';
+                ctx.textAlign = 'center';
+                ctx.fillText(`کمبو ×${this.combo}`, this.w / 2, nextY - 20);
+            }
+        }
+
+        Particles.render(ctx);
+        ctx.translate(0, -this.cameraY);
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+        if (this._key) window.removeEventListener('keydown', this._key);
+    }
+};
+
+window.Game_color = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(500);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.ballR = 12;
+        this.gravity = 1600;
+        this.jumpForce = -600;
+        this.scrollSpeed = 200;
+        this.ringRadius = Math.min(this.w * 0.35, 140);
+        this.ringThick = 16;
+        this.colors = ['#00e5ff', '#ff2d78', '#ffc531', '#2bff88'];
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+            } else if (this.state === 'playing') {
+                this.jump();
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._key = (e) => {
+            if (e.key === ' ' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (this.state === 'menu' || this.state === 'dead') {
+                    this.startGame();
+                } else if (this.state === 'playing') {
+                    this.jump();
+                }
+            }
+        };
+        window.addEventListener('keydown', this._key);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.score = 0;
+        this.ball = {
+            x: this.w / 2,
+            y: this.h * 0.7,
+            vy: 0,
+            colorIndex: 0,
+            trail: []
+        };
+        this.obstacles = [];
+        this.swappers = [];
+        this.spawnTimer = 0;
+        this.spawnObstacle(this.h * 0.3);
+        this.updateHud();
+    }
+
+    jump() {
+        if (this.state !== 'playing') {
+            return;
+        }
+        this.ball.vy = this.jumpForce;
+        AudioEngine.tone(600, 0.08, 'sine', 0.1, 800);
+        Haptics.light();
+        
+        for (let i = 0; i < 8; i++) {
+            Particles.burst(this.ball.x, this.ball.y + this.ballR, 2, {
+                color: this.colors[this.ball.colorIndex],
+                minSpeed: 40,
+                maxSpeed: 120,
+                angle: Math.PI / 2
+            });
+        }
+    }
+
+    spawnObstacle(y) {
+        const type = Math.random();
+        if (type < 0.7) {
+            const segments = 4;
+            const colors = [];
+            for (let i = 0; i < segments; i++) {
+                colors.push(randInt(0, 3));
+            }
+            const starIndex = randInt(0, 3);
+            colors[starIndex] = -1;
+
+            this.obstacles.push({
+                x: this.w / 2,
+                y: y,
+                r: this.ringRadius,
+                thick: this.ringThick,
+                rot: Math.random() * 6.28,
+                rotSpeed: (Math.random() < 0.5 ? 1 : -1) * rand(1, 2.5),
+                segments: segments,
+                colors: colors,
+                passed: false
+            });
+        } else {
+            this.swappers.push({
+                x: this.w / 2,
+                y: y,
+                r: 16,
+                rot: Math.random() * 6.28,
+                rotSpeed: rand(2, 4),
+                passed: false
+            });
+        }
+    }
+
+    updateHud() {
+        this.setHud(`<div class="hud-pill">امتیاز <b>${this.score}</b></div>`);
+    }
+
+    gameOver() {
+        this.state = 'dead';
+        AudioEngine.hit();
+        Haptics.heavy();
+        Camera.add(1.5);
+        
+        Particles.burst(this.ball.x, this.ball.y, 50, {
+            color: this.colors[this.ball.colorIndex],
+            minSpeed: 150,
+            maxSpeed: 500,
+            gravity: 400
+        });
+        
+        setTimeout(() => {
+            App.gameOver('color', this.score);
+        }, 800);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        if (this.state !== 'playing') {
+            return;
+        }
+
+        const b = this.ball;
+        b.vy += this.gravity * dt;
+        b.y += b.vy * dt;
+
+        b.trail.push({
+            x: b.x,
+            y: b.y,
+            color: this.colors[b.colorIndex],
+            life: 0.35
+        });
+        
+        for (const t of b.trail) {
+            t.life -= dt;
+        }
+        b.trail = b.trail.filter(t => t.life > 0);
+
+        for (const o of this.obstacles) {
+            o.y -= this.scrollSpeed * dt;
+            o.rot += o.rotSpeed * dt;
+        }
+        
+        for (const s of this.swappers) {
+            s.y -= this.scrollSpeed * dt;
+            s.rot += s.rotSpeed * dt;
+        }
+
+        this.obstacles = this.obstacles.filter(o => o.y > -o.r - 50);
+        this.swappers = this.swappers.filter(s => s.y > -50);
+
+        const topObs = Math.min(
+            this.obstacles.length ? this.obstacles[this.obstacles.length - 1].y : 9999,
+            this.swappers.length ? this.swappers[this.swappers.length - 1].y : 9999
+        );
+        
+        if (topObs > 50 && topObs < this.h * 0.4) {
+            this.spawnObstacle(topObs - rand(250, 350));
+        } else if (this.obstacles.length === 0 && this.swappers.length === 0) {
+            this.spawnObstacle(this.h * 0.3);
+        }
+
+        if (b.y > this.h + 50) {
+            return this.gameOver();
+        }
+
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const o = this.obstacles[i];
+            const d = Math.hypot(b.x - o.x, b.y - o.y);
+            
+            if (d > o.r - o.thick / 2 - this.ballR && d < o.r + o.thick / 2 + this.ballR) {
+                let angle = Math.atan2(b.y - o.y, b.x - o.x) - o.rot;
+                while (angle < 0) angle += Math.PI * 2;
+                while (angle >= Math.PI * 2) angle -= Math.PI * 2;
+                
+                const segIndex = Math.floor(angle / (Math.PI * 2 / o.segments));
+                const segColor = o.colors[segIndex];
+                
+                if (segColor !== -1 && segColor !== b.colorIndex) {
+                    return this.gameOver();
+                }
+            }
+
+            if (!o.passed && b.y < o.y) {
+                o.passed = true;
+                this.score += 15;
+                AudioEngine.coin();
+                this.updateHud();
+            }
+        }
+
+        for (let i = this.swappers.length - 1; i >= 0; i--) {
+            const s = this.swappers[i];
+            const d = Math.hypot(b.x - s.x, b.y - s.y);
+            
+            if (!s.passed && d < this.ballR + s.r) {
+                s.passed = true;
+                b.colorIndex = (b.colorIndex + randInt(1, 3)) % 4;
+                AudioEngine.tone(900, 0.1, 'sine', 0.1);
+                Haptics.medium();
+                Camera.add(0.2);
+                Particles.burst(s.x, s.y, 20, {
+                    color: this.colors[b.colorIndex],
+                    minSpeed: 100,
+                    maxSpeed: 300
+                });
+            }
+
+            if (!s.passed && b.y < s.y) {
+                s.passed = true;
+            }
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('COLOR SWITCH', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        for (const o of this.obstacles) {
+            ctx.save();
+            ctx.translate(o.x, o.y);
+            ctx.rotate(o.rot);
+            ctx.lineWidth = o.thick;
+            ctx.lineCap = 'butt';
+            
+            const segAngle = (Math.PI * 2) / o.segments;
+            
+            for (let i = 0; i < o.segments; i++) {
+                const cIdx = o.colors[i];
+                if (cIdx === -1) {
+                    continue;
+                }
+                ctx.strokeStyle = this.colors[cIdx];
+                ctx.shadowColor = ctx.strokeStyle;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(0, 0, o.r, i * segAngle, (i + 1) * segAngle);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        for (const s of this.swappers) {
+            ctx.save();
+            ctx.translate(s.x, s.y);
+            ctx.rotate(s.rot);
+            
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = this.colors[i];
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, s.r, i * Math.PI / 2, (i + 1) * Math.PI / 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        for (const t of this.ball.trail) {
+            ctx.globalAlpha = t.life * 3;
+            ctx.fillStyle = t.color;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, this.ballR * 0.8, 0, 6.28);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = this.colors[this.ball.colorIndex];
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, this.ballR, 0, 6.28);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        Particles.render(ctx);
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+        if (this._key) window.removeEventListener('keydown', this._key);
+    }
+};
+
+window.Game_word = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(300);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.btnSize = Math.min(55, (this.w - 60) / 5);
+        this.btnGap = 10;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+            if (this.state !== 'playing') {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+
+            for (let i = 0; i < this.letters.length; i++) {
+                const bx = this.btnXs[i];
+                const by = this.btnYs[i];
+                if (x >= bx && x <= bx + this.btnSize && y >= by && y <= by + this.btnSize) {
+                    if (!this.selected.includes(i)) {
+                        this.selected.push(i);
+                        AudioEngine.tone(600 + (this.selected.length * 50), 0.05, 'sine', 0.1);
+                        Haptics.light();
+                        
+                        Particles.burst(bx + this.btnSize / 2, by + this.btnSize / 2, 5, {
+                            color: '#00e5ff',
+                            minSpeed: 30,
+                            maxSpeed: 100
+                        });
+                    }
+                    break;
+                }
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.score = 0;
+        this.words = [
+            'برنامه', 'گوشی', 'اینترنت', 'بازی', 'دوست', 
+            'کامپیوتر', 'تلگرام', 'هوش', 'کهکشان', 'ستاره',
+            'فضا', 'موشک', 'سیاره', 'خورشید', 'ماه'
+        ];
+        this.newWord();
+    }
+
+    newWord() {
+        this.targetWord = this.words[Math.floor(Math.random() * this.words.length)];
+        this.letters = this.targetWord.split('');
+        this.letters.sort(() => Math.random() - 0.5);
+        this.selected = [];
+        
+        this.btnXs = [];
+        this.btnYs = [];
+        const totalW = this.letters.length * this.btnSize + (this.letters.length - 1) * this.btnGap;
+        const startX = (this.w - totalW) / 2;
+        const startY = this.h * 0.65;
+        
+        for (let i = 0; i < this.letters.length; i++) {
+            this.btnXs.push(startX + i * (this.btnSize + this.btnGap));
+            this.btnYs.push(startY);
+        }
+        
+        this.updateHud();
+    }
+
+    checkWord() {
+        const built = this.selected.map(i => this.letters[i]).join('');
+        if (built === this.targetWord) {
+            this.score += 100;
+            AudioEngine.win();
+            Haptics.success();
+            Camera.add(0.3);
+            
+            Particles.burst(this.w / 2, this.h * 0.4, 40, {
+                color: '#2bff88',
+                minSpeed: 100,
+                maxSpeed: 400
+            });
+            
+            this.newWord();
+        } else {
+            AudioEngine.hit();
+            Haptics.heavy();
+            Camera.add(0.5);
+            this.selected = [];
+        }
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`<div class="hud-pill">امتیاز <b>${this.score}</b></div>`);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        
+        if (this.state === 'playing' && this.selected.length === this.letters.length) {
+            this.checkWord();
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('WORD PUZZLE', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        const slotW = 40;
+        const totalSlotW = this.targetWord.length * slotW;
+        const startSlotX = (this.w - totalSlotW) / 2;
+        
+        for (let i = 0; i < this.targetWord.length; i++) {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(startSlotX + i * slotW + 2, this.h * 0.3, slotW - 4, 45, 8);
+            else ctx.rect(startSlotX + i * slotW + 2, this.h * 0.3, slotW - 4, 45);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        for (let i = 0; i < this.selected.length; i++) {
+            const idx = this.selected[i];
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 28px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.letters[idx], startSlotX + i * slotW + slotW / 2, this.h * 0.3 + 22);
+        }
+
+        for (let i = 0; i < this.letters.length; i++) {
+            const bx = this.btnXs[i];
+            const by = this.btnYs[i];
+            const isSel = this.selected.includes(i);
+            
+            ctx.fillStyle = isSel ? 'rgba(0,229,255,0.15)' : '#111a2e';
+            ctx.strokeStyle = isSel ? '#00e5ff' : 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(bx, by, this.btnSize, this.btnSize, 12);
+            else ctx.rect(bx, by, this.btnSize, this.btnSize);
+            ctx.fill();
+            ctx.stroke();
+
+            if (!isSel) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 26px Tahoma';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.letters[i], bx + this.btnSize / 2, by + this.btnSize / 2 + 2);
+            }
+        }
+
+        Particles.render(ctx);
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+    }
+};
