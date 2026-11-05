@@ -3,87 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Galactic Arena | Ultimate</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Galactic Empire | Pro</title>
+<script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 <style>
-:root{
---bg:#07080d;--panel:#12141c;--glass:rgba(18,20,28,0.88);--text:#fff;--muted:#8b8c94;
---blue:#00f0ff;--pink:#ff0055;--gold:#ffb800;--green:#00ff88;--border:rgba(255,255,255,0.08);
---shadow:0 0 20px rgba(0,240,255,0.12);--font:Tahoma,-apple-system,sans-serif;
+:root {
+    --bg: #06070a;
+    --panel: rgba(18, 22, 32, 0.95);
+    --primary: #00e5ff;
+    --secondary: #ff0055;
+    --gold: #ffcc00;
+    --success: #00ff88;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: rgba(255,255,255,0.08);
 }
-*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font);-webkit-tap-highlight-color:transparent;user-select:none;outline:none}
-body{background:var(--bg);background-image:radial-gradient(circle at 50% 0%,#151b2e 0%,#07080d 80%);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;line-height:1.5}
-.header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(7,8,13,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(15px);z-index:100;flex-shrink:0}
-.user-info{display:flex;align-items:center;gap:12px}
-.avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--pink));display:flex;justify-content:center;align-items:center;font-weight:900;font-size:18px;color:#fff;box-shadow:0 0 10px rgba(0,240,255,0.3)}
-.user-name{font-size:14px;font-weight:700}
-.user-tag{font-size:11px;color:var(--muted)}
-.wallet{background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.3);padding:6px 14px;border-radius:12px;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:900;color:var(--gold)}
-.main-content{flex:1;overflow-y:auto;padding:16px;padding-bottom:80px;scrollbar-width:none}
-.main-content::-webkit-scrollbar{display:none}
-.tab-pane{display:none;animation:slideUp 0.3s ease}
-.tab-pane.active{display:block}
-@keyframes slideUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-.section-title{font-size:16px;font-weight:900;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.section-title::before{content:'';width:4px;height:18px;background:var(--pink);border-radius:2px;box-shadow:0 0 8px var(--pink)}
-.games-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.game-card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all 0.2s ease;backdrop-filter:blur(10px)}
-.game-card:active{transform:scale(0.95);border-color:var(--blue);box-shadow:var(--shadow)}
-.game-icon{font-size:38px;margin-bottom:8px;filter:drop-shadow(0 0 8px rgba(255,255,255,0.1))}
-.game-title{font-size:13px;font-weight:900;margin-bottom:4px}
-.game-desc{font-size:10px;color:var(--muted);line-height:1.4}
-.game-tag{font-size:9px;color:var(--blue);background:rgba(0,240,255,0.1);padding:2px 8px;border-radius:6px;margin-top:6px}
-.bottom-nav{position:fixed;bottom:0;width:100%;height:65px;background:rgba(7,8,13,0.98);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;backdrop-filter:blur(15px);z-index:1000}
-.nav-btn{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:bold;cursor:pointer;padding:8px 12px;border-radius:12px;transition:0.2s}
-.nav-btn.active{color:var(--blue);background:rgba(0,240,255,0.1)}
-.nav-icon{font-size:20px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(10px);z-index:2000;display:none;justify-content:center;align-items:center;padding:16px}
-.modal.active{display:flex}
-.modal-box{background:var(--panel);border:1px solid var(--blue);border-radius:20px;width:100%;max-width:420px;padding:20px;position:relative;box-shadow:0 0 40px rgba(0,240,255,0.15);max-height:90vh;overflow-y:auto}
-.close-modal{position:absolute;top:15px;right:15px;background:rgba(255,0,85,0.1);border:none;color:var(--pink);width:30px;height:30px;border-radius:50%;font-size:18px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;align-items:center}
-.modal-title{font-size:18px;font-weight:900;color:var(--blue);text-align:center;margin-bottom:8px}
-.modal-desc{font-size:12px;color:var(--muted);text-align:center;margin-bottom:16px}
-.btn{width:100%;padding:12px;border:2px solid var(--blue);background:transparent;color:var(--blue);border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;transition:0.2s;margin-top:8px}
-.btn:active{background:rgba(0,240,255,0.1);transform:scale(0.98)}
-.btn-pink{border-color:var(--pink);color:var(--pink)}
-.btn-pink:active{background:rgba(255,0,85,0.1)}
-.btn-gold{border-color:var(--gold);color:var(--gold)}
-.btn-gold:active{background:rgba(255,184,0,0.1)}
-.input-box{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.5);color:var(--text);font-size:14px;margin-bottom:8px;outline:none}
-.chat-container{display:flex;flex-direction:column;height:calc(100vh - 200px);background:var(--glass);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.chat-header{padding:12px 16px;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.chat-title{font-size:14px;font-weight:900;color:var(--blue)}
-.chat-messages{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-.msg-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5}
-.msg-mine{align-self:flex-end;background:rgba(0,240,255,0.15);border:1px solid rgba(0,240,255,0.3);border-bottom-right-radius:4px}
-.msg-other{align-self:flex-start;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-bottom-left-radius:4px}
-.msg-author{font-size:10px;color:var(--gold);font-weight:bold;margin-bottom:4px;display:block}
-.chat-input-area{padding:12px;background:rgba(0,0,0,0.3);border-top:1px solid var(--border);display:flex;gap:8px}
-.chat-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:13px}
-.chat-send-btn{background:var(--blue);color:#000;border:none;border-radius:12px;padding:0 20px;font-weight:900;font-size:14px;cursor:pointer}
-.game-area{width:100%;height:250px;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden;margin-bottom:16px}
-.profile-card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px}
-.profile-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:10px;font-size:14px}
-.profile-row:last-child{border-bottom:none;padding-bottom:0}
-.profile-label{color:var(--muted)}
-.profile-value{font-weight:900}
-.text-gold{color:var(--gold)}.text-blue{color:var(--blue)}.text-green{color:var(--green)}.text-pink{color:var(--pink)}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--panel);border:2px solid var(--green);color:var(--green);padding:12px 24px;border-radius:12px;font-weight:900;font-size:14px;z-index:5000;transition:transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:0 0 20px rgba(0,255,136,0.2)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.mine-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
-.mine-cell{aspect-ratio:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;display:flex;justify-content:center;align-items:center;font-size:22px;cursor:pointer;transition:0.2s}
-.mine-cell.diamond{background:rgba(0,255,136,0.15);border-color:var(--green)}
-.mine-cell.bomb{background:rgba(255,0,85,0.2);border-color:var(--pink)}
-.spin-wheel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;margin-bottom:16px}
-.bottle-icon{font-size:80px;transition:transform 1.5s cubic-bezier(0.175,0.885,0.32,1.275)}
-.guild-card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.guild-info h4{font-size:14px;font-weight:900;color:var(--blue);margin-bottom:4px}
-.guild-info p{font-size:11px;color:var(--muted)}
-.guild-member-count{font-size:12px;color:var(--gold);font-weight:bold}
-.difficulty-selector{display:flex;gap:8px;margin-bottom:12px}
-.diff-btn{flex:1;padding:10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:10px;font-size:12px;font-weight:bold;cursor:pointer;transition:0.2s}
-.diff-btn.active{background:rgba(0,240,255,0.1);border-color:var(--blue);color:var(--blue)}
-.diff-btn:active{transform:scale(0.96)}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+body { background: var(--bg); background-image: radial-gradient(circle at 50% 0%, #111827 0%, #06070a 80%); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; line-height: 1.5; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(6,7,10,0.98); border-bottom: 1px solid var(--border); z-index: 100; flex-shrink: 0; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 16px; color: #000; }
+.user-name { font-size: 13px; font-weight: 700; }
+.user-tag { font-size: 10px; color: var(--muted); }
+.wallet { background: rgba(255,204,0,0.1); border: 1px solid rgba(255,204,0,0.3); padding: 6px 12px; border-radius: 10px; display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 900; color: var(--gold); }
+.main-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; scrollbar-width: none; }
+.main-content::-webkit-scrollbar { display: none; }
+.tab-pane { display: none; animation: fadeIn 0.2s ease; }
+.tab-pane.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section-title { font-size: 15px; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; width: 4px; height: 16px; background: var(--secondary); border-radius: 2px; }
+.home-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; }
+.tap-circle { width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(0,229,255,0.15) 0%, transparent 70%); border: 3px solid rgba(0,229,255,0.4); box-shadow: 0 0 40px rgba(0,229,255,0.2); display: flex; justify-content: center; align-items: center; font-size: 80px; cursor: pointer; transition: transform 0.05s; position: relative; }
+.tap-circle:active { transform: scale(0.92); border-color: var(--primary); }
+.floating-text { position: absolute; font-size: 20px; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--primary); pointer-events: none; animation: floatUp 0.7s ease-out forwards; z-index: 50; }
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(1.3); } }
+.energy-box { width: 90%; max-width: 320px; background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-top: 25px; }
+.energy-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 5px; }
+.energy-bar { width: 100%; height: 8px; background: #1a1a24; border-radius: 4px; overflow: hidden; }
+.energy-fill { height: 100%; background: linear-gradient(90deg, #ffaa00, #ffdd00); width: 100%; transition: width 0.15s; }
+.upg-btn { background: rgba(0,229,255,0.1); border: 1px solid var(--primary); color: var(--primary); padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold; font-size: 13px; cursor: pointer; width: 90%; max-width: 320px; }
+.games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.game-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: 0.2s; }
+.game-card:active { transform: scale(0.95); border-color: var(--primary); }
+.game-icon { font-size: 36px; margin-bottom: 8px; }
+.game-title { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+.game-desc { font-size: 10px; color: var(--muted); }
+.bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: rgba(6,7,10,0.98); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+.nav-btn { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: bold; cursor: pointer; padding: 8px 15px; border-radius: 12px; }
+.nav-btn.active { color: var(--primary); background: rgba(0,229,255,0.1); }
+.nav-icon { font-size: 20px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 16px; }
+.modal.active { display: flex; }
+.modal-box { background: var(--panel); border: 1px solid var(--primary); border-radius: 20px; width: 100%; max-width: 400px; padding: 20px; position: relative; max-height: 90vh; overflow-y: auto; }
+.close-modal { position: absolute; top: 15px; right: 15px; background: rgba(255,0,85,0.1); border: none; color: var(--secondary); width: 28px; height: 28px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.modal-title { font-size: 18px; font-weight: 900; color: var(--primary); text-align: center; margin-bottom: 6px; }
+.modal-desc { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 16px; }
+.btn { width: 100%; padding: 12px; border: 2px solid var(--primary); background: transparent; color: var(--primary); border-radius: 10px; font-weight: 900; font-size: 14px; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+.btn:active { background: rgba(0,229,255,0.1); }
+.btn-red { border-color: var(--secondary); color: var(--secondary); }
+.btn-green { border-color: var(--success); color: var(--success); }
+.btn-gold { border-color: var(--gold); color: var(--gold); }
+.input-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.5); color: var(--text); font-size: 14px; margin-bottom: 8px; }
+.guild-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.guild-info h4 { font-size: 15px; font-weight: 900; color: var(--primary); margin-bottom: 4px; }
+.guild-info p { font-size: 11px; color: var(--muted); }
+.chat-container { display: flex; flex-direction: column; height: calc(100vh - 280px); background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 12px; }
+.chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 12px; }
+.msg-mine { align-self: flex-end; background: rgba(0,229,255,0.15); border: 1px solid var(--primary); border-bottom-right-radius: 2px; }
+.msg-other { align-self: flex-start; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+.msg-author { font-size: 9px; color: var(--gold); font-weight: bold; margin-bottom: 2px; display: block; }
+.chat-input-area { padding: 8px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); display: flex; gap: 6px; }
+.chat-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); font-size: 12px; }
+.chat-send { background: var(--primary); color: #000; border: none; border-radius: 8px; padding: 0 15px; font-weight: 900; cursor: pointer; }
+.toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--panel); border: 2px solid var(--success); color: var(--success); padding: 10px 20px; border-radius: 10px; font-weight: 900; font-size: 13px; z-index: 5000; transition: transform 0.3s; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.game-visual { width: 100%; height: 200px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; margin-bottom: 16px; }
+.multiplier-text { font-size: 50px; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px var(--primary); font-family: 'Courier New', Courier, monospace; }
+.mine-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px; }
+.mine-cell { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; }
+.mine-cell.diamond { background: rgba(0,255,136,0.15); border-color: var(--success); }
+.mine-cell.bomb { background: rgba(255,0,85,0.2); border-color: var(--secondary); }
+.stats-row { display: flex; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+.member-list { max-height: 150px; overflow-y: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.2); }
+.member-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.member-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -94,8 +98,8 @@ body{background:var(--bg);background-image:radial-gradient(circle at 50% 0%,#151
 <div class="user-info">
 <div class="avatar" id="ui-avatar">G</div>
 <div>
-<div class="user-name" id="ui-name">در حال اتصال...</div>
-<div class="user-tag" id="ui-tag">Galactic Arena</div>
+<div class="user-name" id="ui-name">در حال بارگذاری...</div>
+<div class="user-tag" id="ui-tag">Galactic Pro</div>
 </div>
 </div>
 <div class="wallet"><span>💎</span><span id="ui-coins">0</span></div>
@@ -103,908 +107,556 @@ body{background:var(--bg);background-image:radial-gradient(circle at 50% 0%,#151
 
 <div class="main-content">
 
-<div id="tab-games" class="tab-pane active">
-<div class="section-title">بازی‌های کهکشانی (۱۵ بازی)</div>
-<div class="games-grid" id="games-grid"></div>
+<div id="tab-home" class="tab-pane active">
+<div class="home-screen">
+<div class="tap-circle" id="tap-area">🌌</div>
+<div class="energy-box">
+<div class="energy-header"><span id="energy-text">1000 / 1000</span><span>⚡</span></div>
+<div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div>
+</div>
+<button class="upg-btn" onclick="buyUpgrade()">ارتقای ضربه (هزینه: <span id="upg-cost">500</span>)</button>
+</div>
 </div>
 
-<div id="tab-chat" class="tab-pane">
-<div class="chat-container">
-<div class="chat-header">
-<div class="chat-title" id="chat-room-title">اتاق گفتگوی عمومی</div>
-<div style="font-size:10px;color:var(--text-secondary)">آنلاین</div>
+<div id="tab-games" class="tab-pane">
+<div class="section-title">بازی‌های حرفه‌ای</div>
+<div class="games-grid">
+<div class="game-card" onclick="openGame('crash')">
+<div class="game-icon">📈</div>
+<div class="game-title">Crash</div>
+<div class="game-desc">قبل از سقوط خارج شو!</div>
 </div>
-<div class="chat-messages" id="chat-messages"></div>
-<div class="chat-input-area">
-<input type="text" id="chat-input" class="chat-input" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key==='Enter')sendMessage()">
-<button class="chat-send-btn" onclick="sendMessage()">ارسال</button>
+<div class="game-card" onclick="openGame('mines')">
+<div class="game-icon">💣</div>
+<div class="game-title">Mines</div>
+<div class="game-desc">الماس پیدا کن، ریسک کن!</div>
+</div>
+<div class="game-card" onclick="openGame('dice')">
+<div class="game-icon">🎲</div>
+<div class="game-title">Dice</div>
+<div class="game-desc">تاس بریز و شرط ببند.</div>
+</div>
+<div class="game-card" onclick="openGame('ttt')">
+<div class="game-icon">⭕</div>
+<div class="game-title">PvP Duel</div>
+<div class="game-desc">دوز در برابر ربات (شرطی).</div>
 </div>
 </div>
 </div>
 
 <div id="tab-guild" class="tab-pane">
-<div class="section-title">اتحادیه کهکشانی</div>
-<div id="guild-setup">
-<input type="text" id="guild-name-input" class="input-box" placeholder="نام اتحادیه خود را وارد کنید...">
-<button class="btn" onclick="createGuild()">ایجاد اتحادیه</button>
-<button class="btn btn-pink" onclick="searchGuild()">جستجوی اتحادیه</button>
+<div class="section-title">اتحادیه</div>
+<div id="guild-lobby">
+<input type="text" id="guild-input" class="input-box" placeholder="نام اتحادیه...">
+<button class="btn" onclick="createGuild()">ایجاد اتحادیه (1000 💎)</button>
+<button class="btn btn-red" onclick="searchGuild()">جستجوی اتحادیه</button>
 </div>
 <div id="guild-room" style="display:none">
 <div class="guild-card">
 <div class="guild-info">
-<h4 id="guild-display-name"></h4>
-<p>اعضا: <span id="guild-member-count">1</span></p>
+<h4 id="g-display-name"></h4>
+<p>سطح: <span id="g-level">1</span> | خزانه: <span id="g-treasury" style="color:var(--gold)">0</span> 💎</p>
 </div>
-<button class="btn btn-pink" style="width:auto;padding:8px 16px;margin:0" onclick="leaveGuild()">خروج</button>
+<button class="btn btn-red" style="width:auto;padding:6px 12px;margin:0" onclick="leaveGuild()">خروج</button>
 </div>
-<div class="chat-container" style="height:calc(100vh - 320px)">
-<div class="chat-header"><div class="chat-title">چت اتحادیه</div></div>
-<div class="chat-messages" id="guild-chat-messages"></div>
+<div class="stats-row">
+<button class="btn btn-gold" style="margin:0;padding:8px" onclick="donateGuild()">کمک به خزانه (100)</button>
+<button class="btn" style="margin:0;padding:8px" onclick="toggleMembers()">مشاهده اعضا</button>
+</div>
+<div class="member-list" id="member-list" style="display:none"></div>
+<div class="chat-container">
+<div class="chat-messages" id="guild-chat"></div>
 <div class="chat-input-area">
-<input type="text" id="guild-chat-input" class="chat-input" placeholder="پیام به اتحادیه..." onkeydown="if(event.key==='Enter')sendGuildMessage()">
-<button class="chat-send-btn" onclick="sendGuildMessage()">ارسال</button>
+<input type="text" id="guild-chat-input" class="chat-input" placeholder="پیام به اتحادیه..." onkeydown="if(event.key==='Enter')sendGuildMsg()">
+<button class="chat-send" onclick="sendGuildMsg()">ارسال</button>
 </div>
 </div>
 </div>
-</div>
-
-<div id="tab-leaderboard" class="tab-pane">
-<div class="section-title">برترین‌های جهان</div>
-<div id="leaderboard-list"></div>
 </div>
 
 <div id="tab-profile" class="tab-pane">
-<div class="section-title">پروفایل کاربری</div>
-<div class="profile-card">
-<div class="profile-row"><span class="profile-label">مجموع سکه‌ها:</span><span class="profile-value text-gold" id="prof-coins">0</span></div>
-<div class="profile-row"><span class="profile-label">بازی‌های انجام شده:</span><span class="profile-value text-blue" id="prof-plays">0</span></div>
-<div class="profile-row"><span class="profile-label">رکورد موشک:</span><span class="profile-value text-green" id="prof-rocket">0</span></div>
-<div class="profile-row"><span class="profile-label">اتحادیه:</span><span class="profile-value text-pink" id="prof-guild">ندارد</span></div>
-<div class="profile-row"><span class="profile-label">وضعیت:</span><span class="profile-value text-green">متصل به سروش پلاس</span></div>
+<div class="section-title">پروفایل</div>
+<div class="guild-card">
+<div class="guild-info">
+<h4 id="p-name">کاربر</h4>
+<p>شناسه: <span id="p-id">0000</span></p>
 </div>
+</div>
+<div class="stats-row"><span>سکه‌ها:</span><span id="p-coins" style="color:var(--gold)">0</span></div>
+<div class="stats-row"><span>اتحادیه:</span><span id="p-guild" style="color:var(--primary)">ندارد</span></div>
 </div>
 
 </div>
 
 <div class="bottom-nav">
-<button class="nav-btn active" onclick="switchTab('games',this)"><span class="nav-icon">🎮</span><span>بازی‌ها</span></button>
-<button class="nav-btn" onclick="switchTab('chat',this)"><span class="nav-icon">💬</span><span>چت</span></button>
-<button class="nav-btn" onclick="switchTab('guild',this)"><span class="nav-icon">🛡️</span><span>اتحادیه</span></button>
-<button class="nav-btn" onclick="switchTab('leaderboard',this)"><span class="nav-icon">🏆</span><span>رتبه</span></button>
-<button class="nav-btn" onclick="switchTab('profile',this)"><span class="nav-icon">👤</span><span>پروفایل</span></button>
+<button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">🏠</span>خانه</button>
+<button class="nav-btn" onclick="switchTab('games',this)"><span class="nav-icon">🎮</span>بازی‌ها</button>
+<button class="nav-btn" onclick="switchTab('guild',this)"><span class="nav-icon">🛡️</span>اتحادیه</button>
+<button class="nav-btn" onclick="switchTab('profile',this)"><span class="nav-icon">👤</span>پروفایل</button>
 </div>
 
 <div class="modal" id="game-modal">
 <div class="modal-box">
 <button class="close-modal" onclick="closeGame()">×</button>
-<div class="modal-title" id="modal-game-title"></div>
-<div class="modal-desc" id="modal-game-desc"></div>
-<div id="modal-game-content"></div>
+<div class="modal-title" id="m-title"></div>
+<div class="modal-desc" id="m-desc"></div>
+<div id="m-content"></div>
 </div>
 </div>
 
 <script>
-const DB_KEY='GalacticArenaUltimate_v1';
-const CHAT_CHANNEL=new BroadcastChannel('GalacticArena_Chat');
-const GUILD_CHANNEL=new BroadcastChannel('GalacticArena_Guild');
-
-let State={coins:0,plays:0,rocketHighScore:0,guild:null,username:'کاربر'};
-let ChatMessages=[];
-let GuildMessages=[];
-let gameLoop=null;
-let currentGameType=null;
-
-function loadData(){
-try{
-const saved=localStorage.getItem(DB_KEY);
-if(saved)State=JSON.parse(saved);
-const savedChat=localStorage.getItem(DB_KEY+'_chat');
-if(savedChat)ChatMessages=JSON.parse(savedChat);
-const savedGuildChat=localStorage.getItem(DB_KEY+'_guildchat');
-if(savedGuildChat)GuildMessages=JSON.parse(savedGuildChat);
-}catch(e){}
-}
-
-function saveData(){
-localStorage.setItem(DB_KEY,JSON.stringify(State));
-localStorage.setItem(DB_KEY+'_chat',JSON.stringify(ChatMessages));
-localStorage.setItem(DB_KEY+'_guildchat',JSON.stringify(GuildMessages));
-updateUI();
-}
-
-function updateUI(){
-document.getElementById('ui-coins').innerText=State.coins;
-document.getElementById('prof-coins').innerText=State.coins;
-document.getElementById('prof-plays').innerText=State.plays;
-document.getElementById('prof-rocket').innerText=State.rocketHighScore;
-document.getElementById('prof-guild').innerText=State.guild||'ندارد';
-}
-
-function toast(msg){
-const t=document.getElementById('toast');
-t.innerText=msg;t.classList.add('show');
-setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-function initTelegram(){
-const tg=window.Telegram?.WebApp;
-if(tg&&tg.initDataUnsafe?.user){
-const user=tg.initDataUnsafe.user;
-State.username=user.first_name;
-document.getElementById('ui-name').innerText=user.first_name;
-document.getElementById('ui-avatar').innerText=user.first_name.charAt(0).toUpperCase();
-if(user.username)document.getElementById('ui-tag').innerText='@'+user.username;
-tg.ready();tg.expand();
-}else{
-State.username='کاربر مهمان';
-document.getElementById('ui-name').innerText='کاربر مهمان';
-document.getElementById('ui-avatar').innerText='?';
-}
-}
-
-function switchTab(tabId,btn){
-document.querySelectorAll('.tab-pane').forEach(el=>el.classList.remove('active'));
-document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
-document.getElementById('tab-'+tabId).classList.add('active');
-btn.classList.add('active');
-if(tabId==='chat')renderChat();
-if(tabId==='guild')renderGuild();
-if(tabId==='leaderboard')renderLeaderboard();
-}
-
-function renderChat(){
-const box=document.getElementById('chat-messages');
-if(!box)return;
-box.innerHTML=ChatMessages.map(m=>`
-<div class="msg-bubble ${m.mine?'msg-mine':'msg-other'}">
-<span class="msg-author">${m.author}</span>
-<div>${m.text}</div>
-</div>`).join('');
-box.scrollTop=box.scrollHeight;
-}
-
-function sendMessage(){
-const input=document.getElementById('chat-input');
-const text=input.value.trim();
-if(!text)return;
-const msg={author:State.username,text:text,mine:true,ts:Date.now()};
-ChatMessages.push(msg);
-input.value='';
-saveData();
-renderChat();
-try{CHAT_CHANNEL.postMessage(msg);}catch(e){}
-}
-
-CHAT_CHANNEL.onmessage=(e)=>{
-const msg=e.data;
-if(!msg||msg.author===State.username)return;
-ChatMessages.push({...msg,mine:false});
-saveData();
-renderChat();
+const DB_KEY = 'GalacticPro_V1';
+const CHAT_CH = new BroadcastChannel('GalacticGuildChat');
+let State = { coins: 1000, plays: 0, power: 1, energy: 1000, maxEnergy: 1000, guildId: null, userId: Math.floor(Math.random()*9000)+1000 };
+let Guilds = JSON.parse(localStorage.getItem('GalacticGuilds')) || {
+    "Alpha": { level: 1, treasury: 5000, leader: "Admin", members: ["Admin", "Bot1", "Bot2"] }
 };
+let GuildChat = {};
+let gameInterval = null;
 
-function renderGuild(){
-if(!State.guild){
-document.getElementById('guild-setup').style.display='block';
-document.getElementById('guild-room').style.display='none';
-return;
-}
-document.getElementById('guild-setup').style.display='none';
-document.getElementById('guild-room').style.display='block';
-document.getElementById('guild-display-name').innerText=State.guild;
-renderGuildChat();
+function save() {
+    localStorage.setItem(DB_KEY, JSON.stringify(State));
+    localStorage.setItem('GalacticGuilds', JSON.stringify(Guilds));
+    updateUI();
 }
 
-function createGuild(){
-const name=document.getElementById('guild-name-input').value.trim();
-if(!name)return toast('نام اتحادیه را وارد کنید');
-State.guild=name;
-saveData();
-renderGuild();
-toast('اتحادیه ساخته شد!');
+function updateUI() {
+    document.getElementById('ui-coins').innerText = State.coins.toLocaleString();
+    document.getElementById('p-coins').innerText = State.coins.toLocaleString();
+    document.getElementById('energy-text').innerText = Math.floor(State.energy) + ' / ' + State.maxEnergy;
+    document.getElementById('energy-fill').style.width = (State.energy / State.maxEnergy * 100) + '%';
+    document.getElementById('upg-cost').innerText = State.power * 500;
+    document.getElementById('p-guild').innerText = State.guildId ? State.guildId : 'ندارد';
+    
+    if (State.guildId && Guilds[State.guildId]) {
+        document.getElementById('g-display-name').innerText = State.guildId;
+        document.getElementById('g-level').innerText = Guilds[State.guildId].level;
+        document.getElementById('g-treasury').innerText = Guilds[State.guildId].treasury.toLocaleString();
+    }
 }
 
-function searchGuild(){
-const name=document.getElementById('guild-name-input').value.trim();
-if(!name)return toast('نام اتحادیه را وارد کنید');
-State.guild=name;
-saveData();
-renderGuild();
-toast('به اتحادیه '+name+' پیوستید!');
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function leaveGuild(){
-State.guild=null;
-saveData();
-renderGuild();
+function init() {
+    try {
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            document.getElementById('ui-name').innerText = u.first_name;
+            document.getElementById('ui-avatar').innerText = u.first_name[0].toUpperCase();
+            document.getElementById('p-name').innerText = u.first_name;
+            document.getElementById('p-id').innerText = u.id;
+            if(u.username) document.getElementById('ui-tag').innerText = '@' + u.username;
+            tg.ready(); tg.expand();
+        } else {
+            document.getElementById('ui-name').innerText = 'کاربر تستی';
+        }
+    } catch(e) {}
+    
+    if (State.guildId && Guilds[State.guildId]) {
+        document.getElementById('guild-lobby').style.display = 'none';
+        document.getElementById('guild-room').style.display = 'block';
+    }
+    updateUI();
 }
 
-function renderGuildChat(){
-const box=document.getElementById('guild-chat-messages');
-if(!box)return;
-box.innerHTML=GuildMessages.map(m=>`
-<div class="msg-bubble ${m.mine?'msg-mine':'msg-other'}">
-<span class="msg-author">${m.author}</span>
-<div>${m.text}</div>
-</div>`).join('');
-box.scrollTop=box.scrollHeight;
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'guild') renderGuildChat();
 }
 
-function sendGuildMessage(){
-const input=document.getElementById('guild-chat-input');
-const text=input.value.trim();
-if(!text||!State.guild)return;
-const msg={author:State.username,text:text,mine:true,ts:Date.now(),guild:State.guild};
-GuildMessages.push(msg);
-input.value='';
-saveData();
-renderGuildChat();
-try{GUILD_CHANNEL.postMessage(msg);}catch(e){}
-}
-
-GUILD_CHANNEL.onmessage=(e)=>{
-const msg=e.data;
-if(!msg||msg.author===State.username||msg.guild!==State.guild)return;
-GuildMessages.push({...msg,mine:false});
-saveData();
-renderGuildChat();
-};
-
-function renderLeaderboard(){
-const botScores=[
-{name:'👑 GalacticLord',score:1250420},
-{name:'🥈 CryptoKing',score:982100},
-{name:'🥉 NeonBlade',score:850100},
-{name:'GhostRider',score:615200},
-{name:'AlphaWolf',score:412100},
-{name:'CyberPunk',score:288100}
-];
-let html=botScores.map((b,i)=>`
-<div class="profile-row" style="border-right:3px solid ${i===0?'var(--gold)':i===1?'#c0c0c0':'#cd7f32'}">
-<span style="font-weight:bold">${b.name}</span>
-<span style="color:var(--gold);font-weight:900">${b.score.toLocaleString()}</span>
-</div>`).join('');
-html+=`
-<div class="profile-row" style="border-right:3px solid var(--blue);background:rgba(0,240,255,0.05)">
-<span style="font-weight:bold">شما</span>
-<span style="color:var(--blue);font-weight:900">${State.coins.toLocaleString()}</span>
-</div>`;
-document.getElementById('leaderboard-list').innerHTML=html;
-}
-
-const gamesList=[
-{id:'rocket',icon:'🚀',name:'سفر موشک',tag:'سرعتی',desc:'با کشیدن انگشت از سیارک‌ها فرار کن!'},
-{id:'mines',icon:'💣',name:'مین‌یاب',tag:'شانسی',desc:'الماس پیدا کن و از بمب دوری کن.'},
-{id:'bottle',icon:'🍾',name:'چرخ حقیقت',tag:'اجتماعی',desc:'بطری رو بچرخون، حقیقت یا جرات!'},
-{id:'ttt',icon:'⭕',name:'دوز',tag:'PvP',desc:'در برابر ربات یا دوستت بازی کن.'},
-{id:'rps',icon:'✊',name:'سنگ کاغذ',tag:'PvP',desc:'در برابر ربات با سطح سختی.'},
-{id:'memory',icon:'🧠',name:'حافظه',tag:'فکری',desc:'کارت‌های همسان را پیدا کن.'},
-{id:'math',icon:'🧮',name:'ریاضی',tag:'فکری',desc:'به سوالات ریاضی پاسخ بده.'},
-{id:'reaction',icon:'⚡',name:'واکنش',tag:'سرعتی',desc:'به محض سبز شدن کلیک کن!'},
-{id:'target',icon:'🎯',name:'هدف',tag:'دقت',desc:'اهداف را در زمان محدود بزن.'},
-{id:'higher',icon:'🃏',name:'بالا/پایین',tag:'شانسی',desc:'حدس بزن عدد بعدی بالاتر است یا پایین‌تر.'},
-{id:'color',icon:'🎨',name:'تطبیق رنگ',tag:'فکری',desc:'رنگ نوشته را تشخیص بده.'},
-{id:'clicker',icon:'👆',name:'کلیکر',tag:'سرعتی',desc:'در ۱۰ ثانیه هرچه می‌توانی کلیک کن.'},
-{id:'word',icon:'🔤',name:'کلمه‌ساز',tag:'فکری',desc:'حروف را مرتب کن و کلمه بساز.'},
-{id:'wheel',icon:'🎡',name:'گردونه',tag:'شانسی',desc:'گردونه را بچرخان و جایزه بگیر.'},
-{id:'miner',icon:'⛏️',name:'ماینر',tag:'شانسی',desc:'حفاری کن و سنگ قیمتی پیدا کن.'}
-];
-
-function renderGames(){
-document.getElementById('games-grid').innerHTML=gamesList.map(g=>`
-<div class="game-card" onclick="openGame('${g.id}')">
-<div class="game-icon">${g.icon}</div>
-<div class="game-title">${g.name}</div>
-<div class="game-desc">${g.desc}</div>
-<div class="game-tag">${g.tag}</div>
-</div>`).join('');
-}
-
-function openGame(type){
-currentGameType=type;
-document.getElementById('game-modal').classList.add('active');
-const content=document.getElementById('modal-game-content');
-const title=document.getElementById('modal-game-title');
-const desc=document.getElementById('modal-game-desc');
-content.innerHTML='';
-if(gameLoop)clearInterval(gameLoop);
-
-const game=gamesList.find(g=>g.id===type);
-title.innerText=game.icon+' '+game.name;
-desc.innerText=game.desc;
-
-if(type==='rocket')setupRocket(content);
-else if(type==='mines')setupMines(content);
-else if(type==='bottle')setupBottle(content);
-else if(type==='ttt')setupTTT(content);
-else if(type==='rps')setupRPS(content);
-else if(type==='memory')setupMemory(content);
-else if(type==='math')setupMath(content);
-else if(type==='reaction')setupReaction(content);
-else if(type==='target')setupTarget(content);
-else if(type==='higher')setupHigher(content);
-else if(type==='color')setupColor(content);
-else if(type==='clicker')setupClicker(content);
-else if(type==='word')setupWord(content);
-else if(type==='wheel')setupWheel(content);
-else if(type==='miner')setupMiner(content);
-}
-
-function closeGame(){
-document.getElementById('game-modal').classList.remove('active');
-if(gameLoop)clearInterval(gameLoop);
-State.plays++;
-saveData();
-}
-
-function setupRocket(container){
-container.innerHTML=`
-<div class="game-area" id="rocket-area">
-<div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:36px;transition:left 0.05s" id="rocket-player">🚀</div>
-</div>
-<div style="display:flex;justify-content:space-between;margin-bottom:16px">
-<span>امتیاز: <b id="r-score" style="color:var(--gold)">0</b></span>
-</div>`;
-const area=document.getElementById('rocket-area');
-const player=document.getElementById('rocket-player');
-let score=0,posX=50,isDead=false,speed=4;
-
-area.addEventListener('touchmove',(e)=>{
-const rect=area.getBoundingClientRect();
-const touch=e.touches[0];
-posX=((touch.clientX-rect.left)/rect.width)*100;
-player.style.left=posX+'%';
-e.preventDefault();
-},{passive:false});
-
-area.addEventListener('mousemove',(e)=>{
-const rect=area.getBoundingClientRect();
-posX=((e.clientX-rect.left)/rect.width)*100;
-player.style.left=posX+'%';
+document.getElementById('tap-area').addEventListener('click', (e) => {
+    if (State.energy <= 0) return toast('انرژی تمام شد!');
+    State.energy -= 1;
+    State.coins += State.power;
+    save();
+    const el = document.createElement('div');
+    el.className = 'floating-text';
+    el.innerText = '+' + State.power;
+    el.style.left = (e.clientX - 10) + 'px';
+    el.style.top = (e.clientY - 20) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 700);
 });
 
-gameLoop=setInterval(()=>{
-if(isDead)return;
-score++;
-document.getElementById('r-score').innerText=score;
-if(Math.random()<0.08){
-const ast=document.createElement('div');
-ast.className='rocket-asteroid';
-ast.innerText='☄️';
-ast.style.cssText='position:absolute;font-size:30px;left:'+(Math.random()*85)+'%;top:-40px';
-area.appendChild(ast);
+setInterval(() => {
+    if (State.energy < State.maxEnergy) {
+        State.energy = Math.min(State.maxEnergy, State.energy + 5);
+        document.getElementById('energy-text').innerText = Math.floor(State.energy) + ' / ' + State.maxEnergy;
+        document.getElementById('energy-fill').style.width = (State.energy / State.maxEnergy * 100) + '%';
+    }
+}, 1000);
+
+function buyUpgrade() {
+    const cost = State.power * 500;
+    if (State.coins >= cost) {
+        State.coins -= cost;
+        State.power += 1;
+        save();
+        toast('ضربه ارتقا یافت!');
+    } else toast('سکه کافی نیست!');
 }
-document.querySelectorAll('.rocket-asteroid').forEach(ast=>{
-let top=parseInt(ast.style.top)||-40;
-ast.style.top=(top+speed)+'px';
-const astRect=ast.getBoundingClientRect();
-const playerRect=player.getBoundingClientRect();
-if(astRect.bottom>playerRect.top&&astRect.top<playerRect.bottom&&astRect.left<playerRect.right&&astRect.right>playerRect.left){
-isDead=true;clearInterval(gameLoop);ast.innerText='💥';
-State.coins+=score;
-if(score>State.rocketHighScore)State.rocketHighScore=score;
-saveData();
-toast('تصادف کردی! سکه‌ها اضافه شد.');
-setTimeout(closeGame,1000);
+
+function openGame(type) {
+    document.getElementById('game-modal').classList.add('active');
+    const c = document.getElementById('m-content');
+    const title = document.getElementById('m-title');
+    const desc = document.getElementById('m-desc');
+    c.innerHTML = '';
+    if (gameInterval) clearInterval(gameInterval);
+
+    if (type === 'crash') {
+        title.innerText = '📈 Crypto Crash';
+        desc.innerText = 'ضریب بالا می‌رود. قبل از سقوط خارج شوید!';
+        setupCrash(c);
+    } else if (type === 'mines') {
+        title.innerText = '💣 Mines';
+        desc.innerText = 'الماس پیدا کنید. هر الماس ضریب را بالا می‌برد.';
+        setupMines(c);
+    } else if (type === 'dice') {
+        title.innerText = '🎲 Dice';
+        desc.innerText = 'حدس بزنید عدد بالاتر یا پایین‌تر از هدف است.';
+        setupDice(c);
+    } else if (type === 'ttt') {
+        title.innerText = '⭕ PvP Duel';
+        desc.innerText = 'دوز در برابر ربات با شرط سکه.';
+        setupTTT(c);
+    }
 }
-if(top>300)ast.remove();
+
+function closeGame() {
+    document.getElementById('game-modal').classList.remove('active');
+    if (gameInterval) clearInterval(gameInterval);
+    State.plays++;
+    save();
+}
+
+function setupCrash(c) {
+    c.innerHTML = `
+    <div class="game-visual"><div class="multiplier-text" id="crash-mult">1.00x</div></div>
+    <div class="stats-row"><span>شرط:</span><span id="bet-val">100</span></div>
+    <button class="btn btn-green" id="cashout-btn" style="display:none" onclick="cashOut()">خروج (Cashout)</button>
+    <button class="btn" id="start-crash" onclick="startCrash()">شروع با 100 سکه</button>
+    <div id="crash-msg" style="text-align:center; margin-top:10px; font-weight:bold;"></div>`;
+}
+
+let crashMult = 1.0;
+let isCrashed = false;
+let isPlaying = false;
+
+window.startCrash = function() {
+    if (State.coins < 100) return toast('سکه کافی نیست!');
+    State.coins -= 100; save();
+    crashMult = 1.0; isCrashed = false; isPlaying = true;
+    document.getElementById('start-crash').style.display = 'none';
+    document.getElementById('cashout-btn').style.display = 'block';
+    document.getElementById('crash-msg').innerText = '';
+    
+    const crashPoint = Math.max(1.01, 0.99 / Math.random());
+    
+    gameInterval = setInterval(() => {
+        if (isCrashed) return;
+        crashMult += 0.05 * crashMult;
+        document.getElementById('crash-mult').innerText = crashMult.toFixed(2) + 'x';
+        
+        if (crashMult >= crashPoint) {
+            isCrashed = true;
+            clearInterval(gameInterval);
+            document.getElementById('crash-mult').innerText = 'CRASHED!';
+            document.getElementById('crash-mult').style.color = 'var(--secondary)';
+            document.getElementById('cashout-btn').style.display = 'none';
+            document.getElementById('start-crash').style.display = 'block';
+            document.getElementById('crash-msg').innerText = 'باختی!';
+            document.getElementById('crash-msg').style.color = 'var(--secondary)';
+            isPlaying = false;
+        }
+    }, 100);
+};
+
+window.cashOut = function() {
+    if (!isPlaying || isCrashed) return;
+    isPlaying = false;
+    clearInterval(gameInterval);
+    const win = Math.floor(100 * crashMult);
+    State.coins += win; save();
+    document.getElementById('cashout-btn').style.display = 'none';
+    document.getElementById('start-crash').style.display = 'block';
+    document.getElementById('crash-msg').innerText = 'بردی! +' + win + ' سکه';
+    document.getElementById('crash-msg').style.color = 'var(--success)';
+    document.getElementById('crash-mult').style.color = 'var(--success)';
+};
+
+function setupMines(c) {
+    c.innerHTML = `
+    <div class="stats-row"><span>ضریب:</span><span id="mine-mult" style="color:var(--gold)">1.00x</span></div>
+    <div class="mine-grid" id="mine-grid"></div>
+    <button class="btn btn-green" id="mine-cashout" onclick="minesCashOut()" disabled>خروج و برداشت</button>
+    <button class="btn" id="mine-start" onclick="startMines()">شروع (100 سکه)</button>`;
+}
+
+let mineMult = 1.0;
+let mineBombs = [];
+let mineRevealed = 0;
+let mineActive = false;
+
+window.startMines = function() {
+    if (State.coins < 100) return toast('سکه کافی نیست!');
+    State.coins -= 100; save();
+    mineMult = 1.0; mineRevealed = 0; mineActive = true;
+    mineBombs = [];
+    while(mineBombs.length < 3) {
+        let r = Math.floor(Math.random() * 25);
+        if (!mineBombs.includes(r)) mineBombs.push(r);
+    }
+    
+    document.getElementById('mine-start').style.display = 'none';
+    document.getElementById('mine-cashout').disabled = false;
+    document.getElementById('mine-mult').innerText = '1.00x';
+    
+    const grid = document.getElementById('mine-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'mine-cell';
+        cell.onclick = () => {
+            if (!mineActive || cell.classList.contains('diamond') || cell.classList.contains('bomb')) return;
+            if (mineBombs.includes(i)) {
+                cell.classList.add('bomb'); cell.innerText = '💥';
+                mineActive = false;
+                document.getElementById('mine-cashout').disabled = true;
+                document.getElementById('mine-start').style.display = 'block';
+                toast('باختی!');
+            } else {
+                cell.classList.add('diamond'); cell.innerText = '💎';
+                mineRevealed++;
+                mineMult = 1 + (mineRevealed * 0.2);
+                document.getElementById('mine-mult').innerText = mineMult.toFixed(2) + 'x';
+            }
+        };
+        grid.appendChild(cell);
+    }
+};
+
+window.minesCashOut = function() {
+    if (!mineActive) return;
+    mineActive = false;
+    const win = Math.floor(100 * mineMult);
+    State.coins += win; save();
+    document.getElementById('mine-start').style.display = 'block';
+    document.getElementById('mine-cashout').disabled = true;
+    toast('بردی! +' + win + ' سکه');
+};
+
+function setupDice(c) {
+    c.innerHTML = `
+    <div class="game-visual" style="flex-direction:column">
+        <div style="font-size:40px" id="dice-visual">🎲</div>
+        <div style="font-size:14px; margin-top:10px">عدد رول شده: <span id="dice-roll" style="font-weight:bold;color:var(--gold)">-</span></div>
+    </div>
+    <div class="stats-row"><span>شرط:</span><span>100 سکه</span></div>
+    <div style="display:flex; gap:10px; margin-bottom:16px">
+        <button class="btn btn-green" onclick="playDice('over')">بالاتر از 50</button>
+        <button class="btn btn-red" onclick="playDice('under')">پایین‌تر از 50</button>
+    </div>
+    <div id="dice-msg" style="text-align:center; font-weight:bold; min-height:20px"></div>`;
+}
+
+window.playDice = function(type) {
+    if (State.coins < 100) return toast('سکه کافی نیست!');
+    State.coins -= 100; save();
+    const roll = Math.floor(Math.random() * 100) + 1;
+    document.getElementById('dice-visual').innerText = '🎲';
+    document.getElementById('dice-roll').innerText = roll;
+    
+    setTimeout(() => {
+        if ((type === 'over' && roll > 50) || (type === 'under' && roll < 50)) {
+            State.coins += 198; save();
+            document.getElementById('dice-msg').innerText = 'بردی! +198 سکه';
+            document.getElementById('dice-msg').style.color = 'var(--success)';
+        } else {
+            document.getElementById('dice-msg').innerText = 'باختی!';
+            document.getElementById('dice-msg').style.color = 'var(--secondary)';
+        }
+    }, 500);
+};
+
+function setupTTT(c) {
+    c.innerHTML = `
+    <div class="stats-row"><span>شرط:</span><span>50 سکه</span></div>
+    <div id="ttt-board" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px"></div>
+    <div id="ttt-status" style="text-align:center; font-weight:bold; color:var(--primary)">نوبت شما (X)</div>
+    <button class="btn btn-red" onclick="closeGame()">انصراف</button>`;
+    startTTT();
+}
+
+let tttBoard = [];
+let tttActive = false;
+
+function startTTT() {
+    tttBoard = ['','','','','','','','',''];
+    tttActive = true;
+    document.getElementById('ttt-status').innerText = 'نوبت شما (X)';
+    renderTTT();
+}
+
+function renderTTT() {
+    const b = document.getElementById('ttt-board');
+    b.innerHTML = '';
+    tttBoard.forEach((v, i) => {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'aspect-ratio:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:28px; font-weight:bold; cursor:pointer;';
+        cell.innerText = v;
+        cell.style.color = v === 'X' ? 'var(--primary)' : 'var(--secondary)';
+        cell.onclick = () => playTTT(i);
+        b.appendChild(cell);
+    });
+}
+
+function playTTT(i) {
+    if (!tttActive || tttBoard[i]) return;
+    tttBoard[i] = 'X';
+    renderTTT();
+    if (checkTTT('X')) return;
+    if (!tttBoard.includes('')) return finishTTT('draw');
+    setTimeout(() => {
+        let empty = tttBoard.map((v, idx) => v === '' ? idx : null).filter(v => v !== null);
+        let move = empty[Math.floor(Math.random() * empty.length)];
+        tttBoard[move] = 'O';
+        renderTTT();
+        if (checkTTT('O')) return;
+        if (!tttBoard.includes('')) return finishTTT('draw');
+    }, 300);
+}
+
+function checkTTT(p) {
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let w of wins) {
+        if (tttBoard[w[0]] === p && tttBoard[w[1]] === p && tttBoard[w[2]] === p) {
+            finishTTT(p);
+            return true;
+        }
+    }
+    return false;
+}
+
+function finishTTT(res) {
+    tttActive = false;
+    const st = document.getElementById('ttt-status');
+    if (res === 'X') {
+        st.innerText = 'شما بردید! +100 سکه';
+        st.style.color = 'var(--success)';
+        State.coins += 100;
+    } else if (res === 'O') {
+        st.innerText = 'ربات برد! -50 سکه';
+        st.style.color = 'var(--secondary)';
+        State.coins -= 50;
+    } else {
+        st.innerText = 'مساوی!';
+        st.style.color = 'var(--muted)';
+    }
+    save();
+    setTimeout(startTTT, 2000);
+}
+
+function createGuild() {
+    const name = document.getElementById('guild-input').value.trim();
+    if (!name) return toast('نام را وارد کنید');
+    if (State.coins < 1000) return toast('1000 سکه نیاز است');
+    if (Guilds[name]) return toast('این نام وجود دارد');
+    State.coins -= 1000;
+    Guilds[name] = { level: 1, treasury: 0, leader: State.userId, members: [State.userId] };
+    State.guildId = name;
+    save();
+    document.getElementById('guild-lobby').style.display = 'none';
+    document.getElementById('guild-room').style.display = 'block';
+    toast('اتحادیه ساخته شد!');
+}
+
+function searchGuild() {
+    const name = document.getElementById('guild-input').value.trim();
+    if (!name) return toast('نام را وارد کنید');
+    if (!Guilds[name]) return toast('پیدا نشد');
+    State.guildId = name;
+    if (!Guilds[name].members.includes(State.userId)) Guilds[name].members.push(State.userId);
+    save();
+    document.getElementById('guild-lobby').style.display = 'none';
+    document.getElementById('guild-room').style.display = 'block';
+    toast('به اتحادیه پیوستید!');
+}
+
+function leaveGuild() {
+    State.guildId = null;
+    save();
+    document.getElementById('guild-lobby').style.display = 'block';
+    document.getElementById('guild-room').style.display = 'none';
+}
+
+function donateGuild() {
+    if (!State.guildId) return;
+    if (State.coins < 100) return toast('سکه کافی نیست');
+    State.coins -= 100;
+    Guilds[State.guildId].treasury += 100;
+    save();
+    toast('100 سکه به خزانه اضافه شد!');
+}
+
+function toggleMembers() {
+    const el = document.getElementById('member-list');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        el.innerHTML = Guilds[State.guildId].members.map(m => `<div class="member-row"><span>User ${m}</span><span>${m === Guilds[State.guildId].leader ? '👑 رهبر' : 'عضو'}</span></div>`).join('');
+    } else {
+        el.style.display = 'none';
+    }
+}
+
+function renderGuildChat() {
+    const box = document.getElementById('guild-chat');
+    if (!box || !State.guildId) return;
+    const msgs = GuildChat[State.guildId] || [];
+    box.innerHTML = msgs.map(m => `
+        <div class="msg-bubble ${m.mine ? 'msg-mine' : 'msg-other'}">
+            <span class="msg-author">${m.author}</span>
+            <div>${m.text}</div>
+        </div>
+    `).join('');
+    box.scrollTop = box.scrollHeight;
+}
+
+function sendGuildMsg() {
+    const input = document.getElementById('guild-chat-input');
+    const text = input.value.trim();
+    if (!text || !State.guildId) return;
+    const msg = { author: State.userId, text: text, mine: true, ts: Date.now(), guild: State.guildId };
+    if (!GuildChat[State.guildId]) GuildChat[State.guildId] = [];
+    GuildChat[State.guildId].push(msg);
+    input.value = '';
+    renderGuildChat();
+    CHAT_CH.postMessage(msg);
+}
+
+CHAT_CH.onmessage = (e) => {
+    const msg = e.data;
+    if (!msg || msg.author === State.userId || msg.guild !== State.guildId) return;
+    if (!GuildChat[State.guildId]) GuildChat[State.guildId] = [];
+    GuildChat[State.guildId].push({...msg, mine: false});
+    if (document.getElementById('tab-guild').classList.contains('active')) renderGuildChat();
+};
+
+window.addEventListener('load', () => {
+    init();
+    const saved = localStorage.getItem(DB_KEY);
+    if (saved) State = JSON.parse(saved);
+    updateUI();
 });
-},100);
-}
-
-function setupMines(container){
-container.innerHTML=`
-<div class="mine-grid" id="m-grid"></div>
-<div style="text-align:center;margin-bottom:16px">امتیاز: <b id="m-score" style="color:var(--gold)">0</b></div>`;
-const grid=document.getElementById('m-grid');
-let score=0,gameOver=false;
-const bombs=new Set();
-while(bombs.size<5)bombs.add(Math.floor(Math.random()*25));
-
-for(let i=0;i<25;i++){
-const cell=document.createElement('div');
-cell.className='mine-cell';
-cell.onclick=()=>{
-if(gameOver||cell.classList.contains('diamond')||cell.classList.contains('bomb'))return;
-if(bombs.has(i)){
-cell.classList.add('bomb');cell.innerText='💥';
-gameOver=true;
-State.coins+=score;saveData();
-toast('باختی! سکه‌ها اضافه شد.');
-setTimeout(closeGame,1000);
-}else{
-cell.classList.add('diamond');cell.innerText='💎';
-score+=15;
-document.getElementById('m-score').innerText=score;
-}
-};
-grid.appendChild(cell);
-}
-}
-
-function setupBottle(container){
-container.innerHTML=`
-<div class="spin-wheel">
-<div class="bottle-icon" id="bottle-icon">🍾</div>
-</div>
-<button class="btn" id="spin-btn" onclick="spinBottle()">چرخاندن بطری</button>
-<div id="bottle-result" style="text-align:center;margin-top:16px;display:none">
-<p style="margin-bottom:10px">نوبت <b id="selected-player" style="color:var(--blue)"></b> است!</p>
-<div style="display:flex;gap:10px">
-<button class="btn" onclick="pickChoice('حقیقت')">حقیقت</button>
-<button class="btn btn-pink" onclick="pickChoice('جرات')">جرات</button>
-</div>
-</div>`;
-}
-
-function spinBottle(){
-const icon=document.getElementById('bottle-icon');
-const btn=document.getElementById('spin-btn');
-btn.disabled=true;btn.innerText='در حال چرخش...';
-const deg=Math.floor(Math.random()*360)+1440;
-icon.style.transform=`rotate(${deg}deg)`;
-
-setTimeout(()=>{
-const players=['شما','کاوشگر_۱','ستاره_نورد','ربات_کهکشانی'];
-const selected=players[Math.floor(Math.random()*players.length)];
-document.getElementById('selected-player').innerText=selected;
-document.getElementById('bottle-result').style.display='block';
-btn.style.display='none';
-State.coins+=5;saveData();
-toast('۵ سکه بابت چرخش دریافت کردید!');
-},1500);
-}
-
-function pickChoice(type){
-const questions={
-'حقیقت':['بزرگترین ترست در زندگی چیه؟','آخرین بار کِی دروغ گفتی؟','تا حالا کسی رو از ته دل بخشیدی؟'],
-'جرات':['۵ بار دور خودت بچرخ!','صدای یک حیوان رو در بیار!','یک پیام عجیب برای دوستت بفرست!']
-};
-const list=questions[type];
-const q=list[Math.floor(Math.random()*list.length)];
-alert('['+type+']\n\n'+q);
-document.getElementById('bottle-result').style.display='none';
-const btn=document.getElementById('spin-btn');
-btn.style.display='block';btn.disabled=false;btn.innerText='چرخاندن بطری';
-}
-
-function setupTTT(container){
-container.innerHTML=`
-<div class="difficulty-selector">
-<button class="diff-btn active" onclick="setDiff(this,'easy')">آسان</button>
-<button class="diff-btn" onclick="setDiff(this,'medium')">متوسط</button>
-<button class="diff-btn" onclick="setDiff(this,'hard')">سخت</button>
-</div>
-<div id="ttt-board" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
-<div id="ttt-status" style="text-align:center;font-size:16px;font-weight:bold;color:var(--blue)">نوبت شما (X)</div>
-<button class="btn btn-pink" onclick="setupTTT(document.getElementById('modal-game-content'))">شروع مجدد</button>`;
-
-let board=['','','','','','','','',''];
-let gameOver=false;
-let aiDifficulty='easy';
-
-window.setDiff=function(btn,level){
-document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');
-aiDifficulty=level;
-};
-
-function renderBoard(){
-const b=document.getElementById('ttt-board');
-b.innerHTML='';
-board.forEach((cell,i)=>{
-const c=document.createElement('div');
-c.style.cssText='aspect-ratio:1;display:flex;justify-content:center;align-items:center;font-size:32px;font-weight:bold;cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px';
-c.innerText=cell;
-c.style.color=cell==='X'?'var(--blue)':cell==='O'?'var(--pink)':'var(--text)';
-c.onclick=()=>playerMove(i);
-b.appendChild(c);
-});
-}
-
-function checkWin(b){
-const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-for(const w of wins){
-if(b[w[0]]&&b[w[0]]===b[w[1]]&&b[w[1]]===b[w[2]])return b[w[0]];
-}
-return b.includes('')?null:'draw';
-}
-
-function playerMove(i){
-if(board[i]||gameOver)return;
-board[i]='X';
-renderBoard();
-const win=checkWin(board);
-if(win){gameOver=true;document.getElementById('ttt-status').innerText=win==='X'?'شما بردید!':'مساوی!';return;}
-document.getElementById('ttt-status').innerText='نوبت ربات...';
-setTimeout(aiMove,300);
-}
-
-function aiMove(){
-if(gameOver)return;
-const empty=board.map((c,i)=>c?'':i).filter(c=>c!=='');
-if(!empty.length)return;
-
-let move;
-if(aiDifficulty==='easy'){
-move=empty[Math.floor(Math.random()*empty.length)];
-}else if(aiDifficulty==='medium'){
-const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let found=false;
-for(const w of wins){
-const line=w.map(i=>board[i]);
-if(line.filter(c=>c==='O').length===2&&line.includes('')){
-move=w[line.indexOf('')];found=true;break;
-}
-}
-if(!found)for(const w of wins){
-const line=w.map(i=>board[i]);
-if(line.filter(c=>c==='X').length===2&&line.includes('')){
-move=w[line.indexOf('')];found=true;break;
-}
-}
-if(!found)move=empty[Math.floor(Math.random()*empty.length)];
-}else{
-const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let bestScore=-Infinity;
-for(const idx of empty){
-board[idx]='O';
-const score=minimax(board,0,false);
-board[idx]='';
-if(score>bestScore){bestScore=score;move=idx;}
-}
-}
-if(move===undefined)move=empty[0];
-board[move]='O';
-renderBoard();
-const win=checkWin(board);
-if(win){
-gameOver=true;
-if(win==='O'){
-document.getElementById('ttt-status').innerText='ربات برد!';
-}else if(win==='draw'){
-document.getElementById('ttt-status').innerText='مساوی!';
-}else{
-document.getElementById('ttt-status').innerText='شما بردید!';
-State.coins+=20;saveData();
-}
-}else{
-document.getElementById('ttt-status').innerText='نوبت شما (X)';
-}
-}
-
-function minimax(b,depth,isMax){
-const win=checkWin(b);
-if(win==='O')return 10-depth;
-if(win==='X')return depth-10;
-if(win==='draw')return 0;
-const empty=b.map((c,i)=>c?'':i).filter(c=>c!=='');
-if(isMax){
-let best=-Infinity;
-for(const idx of empty){
-b[idx]='O';
-best=Math.max(best,minimax(b,depth+1,false));
-b[idx]='';
-}
-return best;
-}else{
-let best=Infinity;
-for(const idx of empty){
-b[idx]='X';
-best=Math.min(best,minimax(b,depth+1,true));
-b[idx]='';
-}
-return best;
-}
-}
-
-renderBoard();
-}
-
-function setupRPS(container){
-container.innerHTML=`
-<div class="difficulty-selector">
-<button class="diff-btn active" onclick="setRPSDiff(this,'easy')">آسان</button>
-<button class="diff-btn" onclick="setRPSDiff(this,'medium')">متوسط</button>
-<button class="diff-btn" onclick="setRPSDiff(this,'hard')">سخت</button>
-</div>
-<div style="display:flex;gap:10px;justify-content:center;margin:20px 0">
-<button class="btn" onclick="playRPS('✊')" style="font-size:30px">✊</button>
-<button class="btn" onclick="playRPS('✋')" style="font-size:30px">✋</button>
-<button class="btn" onclick="playRPS('✌️')" style="font-size:30px">✌️</button>
-</div>
-<div id="rps-result" style="text-align:center;font-size:18px;font-weight:bold;min-height:30px"></div>
-<div id="rps-score" style="text-align:center;color:var(--gold);margin-top:10px">برد: 0 | باخت: 0</div>`;
-
-let wins=0,losses=0;
-let rpsDiff='easy';
-
-window.setRPSDiff=function(btn,level){
-document.querySelectorAll('#modal-game-content .diff-btn').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');
-rpsDiff=level;
-};
-
-window.playRPS=function(choice){
-let botChoice;
-if(rpsDiff==='easy'){
-botChoice=['✊','✋','✌️'][Math.floor(Math.random()*3)];
-}else if(rpsDiff==='medium'){
-const weights={'✊':1,'✋':1,'✌️':1};
-if(wins>losses)weights['✊']=2;
-else if(losses>wins)weights['✋']=2;
-const pool=[];
-for(const k in weights)for(let i=0;i<weights[k];i++)pool.push(k);
-botChoice=pool[Math.floor(Math.random()*pool.length)];
-}else{
-if(choice==='✊')botChoice='✋';
-else if(choice==='✋')botChoice='✌️';
-else botChoice='✊';
-if(Math.random()<0.2)botChoice=['✊','✋','✌️'][Math.floor(Math.random()*3)];
-}
-
-const result=document.getElementById('rps-result');
-if(choice===botChoice){
-result.innerText='مساوی! ('+botChoice+')';
-result.style.color='var(--muted)';
-}else if((choice==='✊'&&botChoice==='✌️')||(choice==='✋'&&botChoice==='✊')||(choice==='✌️'&&botChoice==='✋')){
-result.innerText='بردی! ('+botChoice+')';
-result.style.color='var(--green)';
-wins++;State.coins+=10;saveData();
-}else{
-result.innerText='باختی! ('+botChoice+')';
-result.style.color='var(--pink)';
-losses++;
-}
-document.getElementById('rps-score').innerText='برد: '+wins+' | باخت: '+losses;
-};
-}
-
-function setupMemory(container){
-const emojis=['🍎','🍌','🍇','🍉','🍓','🍒'];
-const cards=[...emojis,...emojis].sort(()=>Math.random()-0.5);
-let html='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
-cards.forEach((card,i)=>{html+=`<div id="mem-${i}" class="memory-card" onclick="flipMem(${i},'${card}')"></div>`});
-html+='</div>';
-container.innerHTML=html;
-let opened=[],matched=0,score=0;
-window.flipMem=function(i,e){
-const el=document.getElementById('mem-'+i);
-if(el.innerText||opened.length===2)return;
-el.innerText=e;
-el.style.background='rgba(0,240,255,0.15)';
-el.style.borderColor='var(--blue)';
-opened.push({i,e});
-if(opened.length===2){
-if(opened[0].e===opened[1].e){
-matched++;score+=20;State.coins+=20;saveData();
-document.getElementById('game-score').innerText=score;
-opened=[];
-if(matched===6){toast('آفرین! بردی.');setTimeout(closeGame,1200);}
-}else{
-setTimeout(()=>{
-document.getElementById('mem-'+opened[0].i).innerText='';
-document.getElementById('mem-'+opened[0].i).style.background='rgba(0,0,0,0.6)';
-document.getElementById('mem-'+opened[0].i).style.borderColor='rgba(0,240,255,0.15)';
-document.getElementById('mem-'+opened[1].i).innerText='';
-document.getElementById('mem-'+opened[1].i).style.background='rgba(0,0,0,0.6)';
-document.getElementById('mem-'+opened[1].i).style.borderColor='rgba(0,240,255,0.15)';
-opened=[];
-},700);
-}
-}
-};
-}
-
-function setupMath(container){
-container.innerHTML=`
-<h1 id="m-q" style="font-size:36px;margin:16px 0;color:var(--blue);text-align:center">? + ?</h1>
-<input type="number" id="m-i" class="input-box" placeholder="پاسخ؟" style="text-align:center;font-size:24px">
-<button class="btn" onclick="checkMath()">تایید</button>
-<div id="m-score" style="text-align:center;color:var(--gold);margin-top:10px">امتیاز: 0</div>`;
-let ans=0,score=0;
-function newMath(){
-const a=Math.floor(Math.random()*20)+1;
-const b=Math.floor(Math.random()*20)+1;
-const op=Math.random()>0.5?'+':'-';
-ans=op==='+'?a+b:a-b;
-document.getElementById('m-q').innerText=a+' '+op+' '+b+' = ?';
-}
-newMath();
-window.checkMath=function(){
-if(parseInt(document.getElementById('m-i').value)===ans){
-score+=10;State.coins+=10;saveData();
-document.getElementById('m-score').innerText='امتیاز: '+score;
-newMath();
-document.getElementById('m-i').value='';
-}else{
-toast('اشتباه بود!');
-}
-};
-}
-
-function setupReaction(container){
-container.innerHTML=`
-<div id="r-box" style="width:100%;height:200px;border-radius:16px;display:flex;justify-content:center;align-items:center;font-size:20px;font-weight:bold;background:var(--pink);cursor:pointer">منتظر بمان...</div>
-<div id="r-msg" style="text-align:center;margin-top:16px;font-size:18px;font-weight:bold"></div>`;
-const box=document.getElementById('r-box');
-let start=0;
-const timeout=setTimeout(()=>{
-box.style.background='var(--green)';
-box.innerText='کلیک کن!';
-start=Date.now();
-},Math.random()*3000+1500);
-box.onclick=function(){
-if(!start){
-box.innerText='خیلی زود زدی!';
-box.style.background='var(--pink)';
-clearTimeout(timeout);
-}else{
-const t=Date.now()-start;
-box.innerText=t+' میلی‌ثانیه';
-box.style.background='var(--blue)';
-const pts=Math.max(1,Math.floor(1000/t)*5);
-State.coins+=pts;saveData();
-document.getElementById('r-msg').innerText='امتیاز: '+pts;
-setTimeout(closeGame,1800);
-}
-};
-}
-
-function setupTarget(container){
-container.innerHTML=`
-<div style="font-weight:bold;color:var(--pink);margin-bottom:8px;font-size:16px">زمان: <span id="t-t">15</span></div>
-<div id="t-a" style="width:100%;height:220px;background:rgba(0,0,0,0.5);border-radius:16px;border:1px solid var(--blue);position:relative;overflow:hidden"></div>`;
-let time=15,score=0;
-const area=document.getElementById('t-a');
-function spawnTarget(){
-if(time<=0)return;
-const el=document.createElement('div');
-el.innerText='🎯';
-el.style.cssText='position:absolute;font-size:36px;left:'+(Math.random()*80)+'%;top:'+(Math.random()*80)+'%;cursor:pointer';
-el.onclick=function(){
-el.remove();
-score+=10;State.coins+=10;saveData();
-document.getElementById('game-score').innerText=score;
-spawnTarget();
-};
-area.appendChild(el);
-setTimeout(()=>{if(el.parentNode)el.remove();},800);
-}
-spawnTarget();
-gameLoop=setInterval(()=>{
-time--;
-document.getElementById('t-t').innerText=time;
-if(time<=0){clearInterval(gameLoop);toast('پایان بازی!');setTimeout(closeGame,1000);}
-},1000);
-}
-
-function setupHigher(container){
-container.innerHTML=`
-<h1 id="h-n" style="font-size:50px;margin:16px 0;color:var(--blue);text-align:center">?</h1>
-<div style="display:flex;gap:10px">
-<button class="btn" onclick="guessHigher(true)">بالاتر</button>
-<button class="btn btn-pink" onclick="guessHigher(false)">پایین‌تر</button>
-</div>
-<div id="h-result" style="text-align:center;margin-top:16px;font-weight:bold;min-height:30px"></div>`;
-let cur=Math.floor(Math.random()*100);
-document.getElementById('h-n').innerText=cur;
-window.guessHigher=function(up){
-const next=Math.floor(Math.random()*100);
-const res=document.getElementById('h-result');
-if((up&&next>cur)||(!up&&next<cur)){
-res.innerText='بردی! +15';
-res.style.color='var(--green)';
-State.coins+=15;saveData();
-}else{
-res.innerText='باختی!';
-res.style.color='var(--pink)';
-}
-cur=next;
-document.getElementById('h-n').innerText=cur;
-};
-}
-
-function setupColor(container){
-const colors=['قرمز','آبی','سبز','زرد'];
-const cHex={'قرمز':'#ff0000','آبی':'#0000ff','سبز':'#00ff00','زرد':'#ffff00'};
-const word=colors[Math.floor(Math.random()*4)];
-const color=colors[Math.floor(Math.random()*4)];
-container.innerHTML=`
-<h1 style="font-size:40px;color:${cHex[color]};margin:16px 0;text-align:center;text-shadow:0 0 20px ${cHex[color]}">${word}</h1>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="c-g"></div>`;
-document.getElementById('c-g').innerHTML=colors.map(cl=>`<button class="btn" style="border-color:${cHex[cl]};color:${cHex[cl]}" onclick="pickColor('${cl}','${color}')">${cl}</button>`).join('');
-window.pickColor=function(picked,correct){
-if(picked===correct){
-State.coins+=15;saveData();
-toast('درست! +15');
-setTimeout(()=>setupColor(container),600);
-}else{
-toast('اشتباه!');
-}
-};
-}
-
-function setupClicker(container){
-container.innerHTML=`
-<div id="c-t" style="font-size:70px;margin:16px 0;cursor:pointer;text-align:center">🪙</div>
-<div style="color:var(--pink);font-weight:bold;text-align:center;font-size:18px">زمان: <span id="c-tt">10</span></div>
-<div id="c-s" style="text-align:center;color:var(--gold);margin-top:10px">امتیاز: 0</div>`;
-let t=10,s=0;
-document.getElementById('c-t').onclick=function(){
-if(t>0){s++;State.coins+=1;saveData();document.getElementById('c-s').innerText='امتیاز: '+s;}
-};
-gameLoop=setInterval(()=>{
-t--;
-document.getElementById('c-tt').innerText=t;
-if(t<=0){clearInterval(gameLoop);toast('پایان!');setTimeout(closeGame,1000);}
-},1000);
-}
-
-function setupWord(container){
-const words=['برنامه','اینترنت','تلگرام','دیتابیس','امنیت','شبکه','کامپیوتر'];
-const target=words[Math.floor(Math.random()*words.length)];
-container.innerHTML=`
-<h2 style="font-size:30px;letter-spacing:6px;margin:16px 0;color:var(--gold);text-align:center">${target.split('').sort(()=>Math.random()-0.5).join('')}</h2>
-<input type="text" id="w-i" class="input-box" placeholder="کلمه صحیح...">
-<button class="btn" onclick="checkWord('${target}')">تایید</button>`;
-window.checkWord=function(w){
-if(document.getElementById('w-i').value===w){
-State.coins+=50;saveData();
-toast('درست بود! +50');
-setTimeout(closeGame,1000);
-}else{
-toast('اشتباه بود!');
-}
-};
-}
-
-function setupWheel(container){
-container.innerHTML=`
-<div style="font-size:80px;margin:16px 0;text-align:center;transition:transform 0.8s" id="w-v">🎡</div>
-<button class="btn btn-gold" onclick="spinWheel()">چرخاندن (۵۰ سکه)</button>
-<div id="w-result" style="text-align:center;margin-top:16px;font-weight:bold;min-height:30px"></div>`;
-window.spinWheel=function(){
-if(State.coins<50)return toast('سکه کافی نیست!');
-State.coins-=50;saveData();
-document.getElementById('w-v').style.transform='rotate('+(Math.random()*720+720)+'deg)';
-setTimeout(()=>{
-const w=Math.floor(Math.random()*200)+10;
-State.coins+=w;saveData();
-document.getElementById('w-result').innerText='بردی! +'+w;
-},800);
-};
-}
-
-function setupMiner(container){
-container.innerHTML=`
-<div style="font-size:70px;margin:16px 0;text-align:center;transition:transform 0.1s" id="rock">🪨</div>
-<div class="progress-bar"><div class="progress-fill" id="mine-bar"></div></div>
-<button class="btn" style="margin-top:16px" onclick="digMine()">حفاری</button>`;
-window.digMine=function(){
-const bar=document.getElementById('mine-bar');
-let p=0;
-document.getElementById('rock').style.transform='rotate(15deg) translateY(4px)';
-setTimeout(()=>document.getElementById('rock').style.transform='rotate(0deg) translateY(0)',100);
-const int=setInterval(()=>{
-p+=20;bar.style.width=p+'%';
-if(p>=100){
-clearInterval(int);
-bar.style.width='0%';
-const loot=Math.floor(Math.random()*50)+10;
-State.coins+=loot;saveData();
-toast('سنگ پیدا کردی! +'+loot);
-}
-},100);
-};
-}
-
-loadData();
-initTelegram();
-updateUI();
-renderGames();
-renderChat();
-renderLeaderboard();
 </script>
 </body>
 </html>
