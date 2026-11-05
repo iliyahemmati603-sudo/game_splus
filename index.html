@@ -8,18 +8,12 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root {
-    --bg: #050510;
-    --glass: rgba(20, 25, 40, 0.6);
-    --border: rgba(0, 243, 255, 0.3);
-    --primary: #00f3ff;
-    --secondary: #ff0055;
-    --success: #39ff14;
-    --text: #e0e6ed;
+    --bg: #050510; --glass: rgba(20, 25, 40, 0.6); --border: rgba(0, 243, 255, 0.3);
+    --primary: #00f3ff; --success: #39ff14; --text: #e0e6ed;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; user-select: none; }
 body { 
-    background-color: var(--bg); 
-    background-image: radial-gradient(circle at 50% 0%, #1a103c 0%, #050510 70%);
+    background-color: var(--bg); background-image: radial-gradient(circle at 50% 0%, #1a103c 0%, #050510 70%);
     color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
 }
 .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
@@ -27,68 +21,48 @@ body {
     background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); 
     padding: 8px 20px; border-radius: 12px; font-family: 'Orbitron', sans-serif; 
     color: var(--primary); font-weight: 900; font-size: 18px; text-shadow: 0 0 10px var(--primary);
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
 }
 .main-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 #particle-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 .core-btn {
-    width: 200px; height: 200px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(0, 243, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
-    border: 3px solid var(--primary);
-    box-shadow: 0 0 40px var(--primary), inset 0 0 30px var(--primary);
-    display: flex; justify-content: center; align-items: center;
-    cursor: pointer; z-index: 2; transition: transform 0.1s;
+    width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 243, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+    border: 3px solid var(--primary); box-shadow: 0 0 40px var(--primary), inset 0 0 30px var(--primary);
+    display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 2; transition: transform 0.1s;
 }
-.core-btn:active { transform: scale(0.92); box-shadow: 0 0 80px var(--primary), inset 0 0 60px var(--primary); }
+.core-btn:active { transform: scale(0.92); }
 .core-icon { font-size: 80px; filter: drop-shadow(0 0 20px var(--primary)); animation: float 3s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 .menu-area { 
     background: var(--glass); backdrop-filter: blur(20px); border-top: 1px solid var(--border); 
-    border-radius: 25px 25px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 15px; 
-    z-index: 10; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+    border-radius: 25px 25px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10;
 }
-.upgrade-card {
-    background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;
-    padding: 15px; display: flex; justify-content: space-between; align-items: center;
-}
-.upg-info h4 { color: var(--primary); font-size: 15px; margin-bottom: 5px; font-weight: 700; }
+.upgrade-card { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.upg-info h4 { color: var(--primary); font-size: 15px; margin-bottom: 5px; }
 .upg-info p { font-size: 12px; color: #8892b0; }
-.buy-btn { 
-    background: transparent; border: 1px solid var(--success); color: var(--success); 
-    padding: 8px 16px; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer;
-    box-shadow: 0 0 10px rgba(57, 255, 20, 0.2); transition: 0.2s;
-}
-.buy-btn:disabled { border-color: #333; color: #555; box-shadow: none; }
-.buy-btn:not(:disabled):active { background: rgba(57, 255, 20, 0.1); }
+.buy-btn { background: transparent; border: 1px solid var(--success); color: var(--success); padding: 8px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+.buy-btn:disabled { border-color: #333; color: #555; }
+#debug-msg { position: fixed; top: 10px; left: 10px; background: red; color: white; padding: 5px; z-index: 9999; font-size: 12px; display: none; }
 </style>
 </head>
 <body>
+<div id="debug-msg"></div>
 
 <div class="header">
     <div class="balance-box"><span id="balance">0</span> ⚡</div>
-    <div style="font-family:'Orbitron'; color:#fff; font-size:12px;">QUANTUM EMPIRE</div>
 </div>
 
 <div class="main-area">
     <canvas id="particle-canvas"></canvas>
-    <div class="core-btn" id="core">
-        <div class="core-icon">🌌</div>
-    </div>
+    <div class="core-btn" id="core"><div class="core-icon">🌌</div></div>
 </div>
 
 <div class="menu-area">
     <div class="upgrade-card">
-        <div class="upg-info">
-            <h4>تپ اختر (Pulsar)</h4>
-            <p>قدرت استخراج: <span id="power-val">1</span></p>
-        </div>
+        <div class="upg-info"><h4>تپ اختر</h4><p>قدرت: <span id="power-val">1</span></p></div>
         <button class="buy-btn" id="btn-click" onclick="upgrade('click')">ارتقا</button>
     </div>
     <div class="upgrade-card">
-        <div class="upg-info">
-            <h4>ربات کوانتومی</h4>
-            <p>درآمد خودکار: <span id="auto-val">0</span>/ثانیه</p>
-        </div>
+        <div class="upg-info"><h4>ربات ماینر</h4><p>درآمد: <span id="auto-val">0</span>/s</p></div>
         <button class="buy-btn" id="btn-auto" onclick="upgrade('auto')">ارتقا</button>
     </div>
 </div>
@@ -98,28 +72,24 @@ const API_URL = 'https://python-lwo0b6.chbkn.dev/api';
 let player = null;
 let unSyncedClicks = 0;
 
-const tg = window.Telegram.WebApp;
+const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
+
+function showError(msg) {
+    const dbg = document.getElementById('debug-msg');
+    dbg.style.display = 'block';
+    dbg.innerText = "خطا: " + msg;
+}
 
 const canvas = document.getElementById('particle-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
 function createParticle(x, y) {
     for (let i = 0; i < 5; i++) {
-        particles.push({
-            x: x, y: y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
-            life: 1, color: '#00f3ff'
-        });
+        particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, life: 1, color: '#00f3ff' });
     }
 }
 
@@ -129,8 +99,7 @@ function updateParticles() {
         let p = particles[i];
         p.x += p.vx; p.y += p.vy; p.life -= 0.03;
         if (p.life <= 0) { particles.splice(i, 1); continue; }
-        ctx.globalAlpha = p.life;
-        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
         ctx.beginPath(); ctx.arc(p.x, p.y, 2.5 * p.life, 0, Math.PI * 2); ctx.fill();
     }
     requestAnimationFrame(updateParticles);
@@ -160,7 +129,7 @@ function updateUI() {
 }
 
 document.getElementById('core').addEventListener('click', (e) => {
-    if (!player) return;
+    if (!player) return showError("اتصال به سرور برقرار نیست");
     player.balance += player.click_power;
     unSyncedClicks++;
     createParticle(e.clientX, e.clientY);
@@ -174,51 +143,45 @@ setInterval(async () => {
     try {
         const res = await fetch(`${API_URL}/sync`, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ initData: tg.initData, clicks: clicksToSend })
+            body: JSON.stringify({ initData: tg ? tg.initData : "", clicks: clicksToSend })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-            player = data.user;
-            updateUI();
-        }
-    } catch(e) { unSyncedClicks += clicksToSend; }
+        if (data.status === 'success') { player = data.user; updateUI(); }
+    } catch(e) { unSyncedClicks += clicksToSend; showError("عدم همگام‌سازی با سرور"); }
 }, 3000);
 
 async function upgrade(type) {
     try {
         const res = await fetch(`${API_URL}/upgrade`, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ initData: tg.initData, type: type })
+            body: JSON.stringify({ initData: tg ? tg.initData : "", type: type })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-            player = data.user;
-            updateUI();
-        }
-    } catch(e) {}
+        if (data.status === 'success') { player = data.user; updateUI(); }
+        else { alert(data.message); }
+    } catch(e) { showError("خطا در ارتقا"); }
 }
 
 async function init() {
     try {
         const res = await fetch(`${API_URL}/auth`, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ initData: tg.initData })
+            body: JSON.stringify({ initData: tg ? tg.initData : "" })
         });
         const data = await res.json();
         if (data.status === 'success') {
             player = data.user;
             updateUI();
+        } else {
+            showError("احراز هویت ناموفق");
         }
     } catch (e) {
-        console.error("Offline");
+        showError("اتصال به بک‌اند چابکان برقرار نشد!");
     }
 }
 
 setInterval(() => {
-    if (player && player.auto_miner > 0) {
-        player.balance += player.auto_miner;
-        updateUI();
-    }
+    if (player && player.auto_miner > 0) { player.balance += player.auto_miner; updateUI(); }
 }, 1000);
 
 init();
