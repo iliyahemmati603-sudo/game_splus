@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GameS Plus | پلتفرم بازی</title>
+    <style>
+        :root {
+            --bg: #05050a;
+            --panel: rgba(18, 22, 35, 0.85);
+            --primary: #00e5ff;
+            --secondary: #ff0055;
+            --gold: #ffcc00;
+            --success: #00ff88;
+            --text: #ffffff;
+            --muted: #8b8b93;
+            --border: rgba(255, 255, 255, 0.08);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1a103c 0%, #040408 80%);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        .header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(4, 4, 8, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 16px;
+            color: #000;
+        }
+
+        .user-details h2 {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .user-details p {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .wallet {
+            text-align: left;
+        }
+
+        .wallet-title {
+            font-size: 10px;
+            color: var(--muted);
+            display: block;
+        }
+
+        .wallet-amount {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+            scrollbar-width: none;
+            position: relative;
+        }
+
+        .main-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.2s ease;
+            padding: 16px;
+            min-height: 100%;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: var(--secondary);
+            border-radius: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+            position: relative;
+        }
+
+        .card:active {
+            transform: scale(0.96);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.1));
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .card-desc {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .card-tag {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--panel);
+            width: 94%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--primary);
+            text-align: center;
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: translateY(15px);
+            transition: transform 0.2s;
+        }
+
+        .modal.show .modal-box {
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 0, 85, 0.1);
+            border: none;
+            color: var(--secondary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .modal-desc {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 14px;
+            width: 100%;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn:active {
+            background: rgba(0, 229, 255, 0.1);
+        }
+
+        .btn-danger {
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .btn-danger:active {
+            background: rgba(255, 0, 85, 0.1);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 229, 255, 0.2);
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--primary);
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+            outline: none;
+            font-family: monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a1a24;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            width: 0%;
+            transition: width 0.15s;
+        }
+
+        #toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(10, 10, 20, 0.95);
+            border: 2px solid var(--success);
+            color: var(--success);
+            padding: 10px 20px;
+            border-radius: 12px;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+            font-weight: 900;
+            font-size: 13px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .memory-card {
+            height: 55px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .memory-card.flipped {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 60vh;
+            position: relative;
+        }
+
+        .tap-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+            border: 3px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 80px;
+            cursor: pointer;
+            transition: transform 0.05s;
+            position: relative;
+        }
+
+        .tap-circle:active {
+            transform: scale(0.92);
+            border-color: var(--primary);
+        }
+
+        .floating-text {
+            position: absolute;
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            pointer-events: none;
+            animation: floatUp 0.7s ease-out forwards;
+            z-index: 50;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+        }
+
+        .energy-container {
+            position: absolute;
+            bottom: 16px;
+            width: 90%;
+            max-width: 360px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .energy-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .energy-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a1a24;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffaa00, #ffdd00);
+            width: 100%;
+            transition: width 0.15s;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel);
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-right: 3px solid var(--primary);
+            border-left: 1px solid var(--border);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:nth-child(1) { border-right-color: var(--gold); }
+        .list-item:nth-child(2) { border-right-color: #c0c0c0; }
+        .list-item:nth-child(3) { border-right-color: #cd7f32; }
+
+        .upg-card {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .upg-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: right;
+        }
+
+        .upg-icon { font-size: 28px; }
+
+        .upg-title { font-size: 13px; font-weight: 900; }
+        .upg-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 11px;
+            width: auto;
+            margin: 0;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-sm:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="header">
+    <div class="user-info">
+        <div class="avatar" id="user-avatar">G</div>
+        <div class="user-details">
+            <h2 id="user-name">کاوشگر</h2>
+            <p id="user-level">سطح 1</p>
+        </div>
+    </div>
+    <div class="wallet">
+        <span class="wallet-title">موجودی</span>
+        <div class="wallet-amount"><span id="balance-amount">0</span> 🪙</div>
+    </div>
+</div>
+
+<div class="main-container">
+    <div id="screen-home" class="screen active">
+        <div class="home-screen">
+            <div class="tap-circle" id="tap-area">🌌</div>
+            <div class="energy-container">
+                <div class="energy-header">
+                    <span id="energy-text">1000 / 1000</span>
+                    <span>⚡ انرژی</span>
+                </div>
+                <div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-games" class="screen">
+        <div class="section-title">کتابخانه بازی‌ها (۱۲ بازی)</div>
+        <div class="grid" id="games-grid"></div>
+    </div>
+
+    <div id="screen-upgrades" class="screen">
+        <div class="section-title">ارتقا و افزایش درآمد</div>
+        <div id="upgrades-container"></div>
+    </div>
+
+    <div id="screen-leaderboard" class="screen">
+        <div class="section-title">برترین‌های جهان</div>
+        <div id="leaderboard-list"></div>
+    </div>
+
+    <div id="screen-profile" class="screen">
+        <div class="section-title">پروفایل کاربری</div>
+        <div class="list-item">
+            <span>مجموع سکه‌ها</span>
+            <span id="prof-score" style="color: var(--gold); font-weight: 900;">0</span>
+        </div>
+        <div class="list-item">
+            <span>تعداد بازی‌ها</span>
+            <span id="prof-plays" style="color: var(--primary); font-weight: 900;">0</span>
+        </div>
+        <div class="list-item">
+            <span>سطح کاربری</span>
+            <span id="prof-level" style="color: var(--success); font-weight: 900;">1</span>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home', this)">
+        <span class="nav-icon">🏠</span><span>خانه</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('games', this)">
+        <span class="nav-icon">🎮</span><span>بازی‌ها</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('upgrades', this)">
+        <span class="nav-icon">💎</span><span>ارتقا</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('leaderboard', this)">
+        <span class="nav-icon">🏆</span><span>رتبه</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('profile', this)">
+        <span class="nav-icon">👤</span><span>پروفایل</span>
+    </button>
+</div>
+
+<div class="modal" id="game-modal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="closeGame()">✕</button>
+        <div class="modal-title" id="game-title">بازی</div>
+        <div class="modal-desc" id="game-desc"></div>
+        <div class="stats-bar">
+            <span>رکورد: <b id="game-high" style="color:var(--gold)">0</b></span>
+            <span>امتیاز: <b id="game-score" style="color:var(--success)">0</b></span>
+        </div>
+        <div id="game-content"></div>
+    </div>
+</div>
+
+<script>
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playSound(freq, type, duration) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.08));
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + (duration || 0.08));
+        } catch (e) {}
+    }
+
+    class Database {
+        constructor() {
+            this.key = 'GalacticTap_Pro_v2';
+            this.defaultData = {
+                score: 0,
+                level: 1,
+                energy: 1000,
+                maxEnergy: 1000,
+                plays: 0,
+                records: {},
+                upgrades: {
+                    multiTap: 1,
+                    energyLimit: 1,
+                    autoTap: 0,
+                    recharge: 1
+                }
+            };
+            this.data = JSON.parse(localStorage.getItem(this.key)) || this.defaultData;
+            this.save();
+        }
+
+        save() {
+            localStorage.setItem(this.key, JSON.stringify(this.data));
+            this.updateUI();
+        }
+
+        addScore(amount) {
+            this.data.score += amount;
+            this.data.plays++;
+            this.data.level = Math.floor(this.data.score / 5000) + 1;
+            this.save();
+        }
+
+        setRecord(id, score) {
+            if (!this.data.records[id] || score > this.data.records[id]) {
+                this.data.records[id] = score;
+                this.save();
+            }
+        }
+
+        getRecord(id) {
+            return this.data.records[id] || 0;
+        }
+
+        updateUI() {
+            document.getElementById('balance-amount').innerText = this.format(this.data.score);
+            document.getElementById('user-level').innerText = 'سطح ' + this.data.level;
+            document.getElementById('prof-score').innerText = this.format(this.data.score);
+            document.getElementById('prof-plays').innerText = this.data.plays;
+            document.getElementById('prof-level').innerText = this.data.level;
+            this.updateEnergy();
+        }
+
+        updateEnergy() {
+            document.getElementById('energy-text').innerText = Math.floor(this.data.energy) + ' / ' + this.data.maxEnergy;
+            document.getElementById('energy-fill').style.width = (this.data.energy / this.data.maxEnergy * 100) + '%';
+        }
+
+        format(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    }
+
+    const db = new Database();
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        playSound(800, 'triangle', 0.1);
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function switchTab(tab, el) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('screen-' + tab).classList.add('active');
+        el.classList.add('active');
+        playSound(500, 'sine', 0.05);
+        if (tab === 'leaderboard') renderLeaderboard();
+        if (tab === 'upgrades') renderUpgrades();
+    }
+
+    document.getElementById('tap-area').addEventListener('click', (e) => {
+        if (db.data.energy <= 0) return toast('انرژی تمام شد!');
+        const gain = db.data.upgrades.multiTap;
+        db.data.energy -= 1;
+        db.addScore(gain);
+        playSound(600 + Math.random() * 200, 'square', 0.05);
+
+        const el = document.createElement('div');
+        el.className = 'floating-text';
+        el.innerText = '+' + gain;
+        el.style.left = (e.clientX - 10) + 'px';
+        el.style.top = (e.clientY - 20) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 700);
+    });
+
+    setInterval(() => {
+        if (db.data.energy < db.data.maxEnergy) {
+            db.data.energy += db.data.upgrades.recharge;
+            if (db.data.energy > db.data.maxEnergy) db.data.energy = db.data.maxEnergy;
+            db.updateEnergy();
+        }
+        if (db.data.upgrades.autoTap > 0) {
+            db.addScore(db.data.upgrades.autoTap * 5);
+        }
+    }, 1000);
+
+    const gamesList = [
+        { id: 'tapper', icon: '💥', name: 'ضربه‌زن', tag: 'سرعتی', desc: 'با سرعت روی سیاره کلیک کنید و سکه جمع کنید. هر کلیک یک سکه می‌دهد.' },
+        { id: 'memory', icon: '🧠', name: 'حافظه', tag: 'فکری', desc: 'کارت‌های همسان را پیدا کنید. هر جفت درست ۲۰ امتیاز دارد.' },
+        { id: 'reaction', icon: '⚡', name: 'واکنش', tag: 'سرعتی', desc: 'به محض سبز شدن صفحه، کلیک کنید. هرچه سریع‌تر، امتیاز بیشتر!' },
+        { id: 'math', icon: '🧮', name: 'ریاضی', tag: 'فکری', desc: 'به سوالات ریاضی پاسخ دهید. هر پاسخ صحیح ۱۰ امتیاز دارد.' },
+        { id: 'target', icon: '🎯', name: 'هدف', tag: 'دقت', desc: 'اهداف را در زمان محدود بزنید. هر هدف ۱۰ امتیاز دارد.' },
+        { id: 'word', icon: '🔤', name: 'کلمه', tag: 'فکری', desc: 'حروف به هم ریخته را مرتب کنید و کلمه صحیح را بسازید.' },
+        { id: 'wheel', icon: '🎡', name: 'شانس', tag: 'شانسی', desc: 'گردونه را بچرخانید و جایزه بگیرید. هزینه هر چرخش ۵۰ سکه است.' },
+        { id: 'rps', icon: '✊', name: 'سنگ کاغذ', tag: 'شانسی', desc: 'در برابر ربات سنگ، کاغذ یا قیچی بازی کنید. برنده ۱۰ امتیاز می‌گیرد.' },
+        { id: 'higher', icon: '🃏', name: 'بالا/پایین', tag: 'شانسی', desc: 'حدس بزنید عدد بعدی بالاتر است یا پایین‌تر. هر برد ۱۵ امتیاز.' },
+        { id: 'color', icon: '🎨', name: 'تطبیق رنگ', tag: 'فکری', desc: 'رنگ نوشته را تشخیص دهید. هر پاسخ درست ۱۵ امتیاز دارد.' },
+        { id: 'clicker', icon: '👆', name: 'کلیکر', tag: 'سرعتی', desc: 'در ۱۰ ثانیه هرچه می‌توانید کلیک کنید. هر کلیک یک امتیاز.' },
+        { id: 'miner', icon: '⛏️', name: 'ماینر', tag: 'شانسی', desc: 'حفاری کنید و سنگ قیمتی پیدا کنید. هر سنگ ۱۰ تا ۶۰ امتیاز دارد.' }
+    ];
+
+    document.getElementById('games-grid').innerHTML = gamesList.map(g => `
+        <div class="card" onclick="openGame('${g.id}')">
+            <div class="card-icon">${g.icon}</div>
+            <div class="card-name">${g.name}</div>
+            <div class="card-desc">${g.desc}</div>
+            <div class="card-tag">${g.tag}</div>
+        </div>
+    `).join('');
+
+    const upgradesList = [
+        { id: 'multiTap', name: 'ضربه چندگانه', icon: '👆', desc: 'قدرت هر کلیک را ۲ برابر می‌کند', baseCost: 1000 },
+        { id: 'energyLimit', name: 'مخزن انرژی', icon: '🔋', desc: 'حداکثر انرژی را ۵۰۰ واحد افزایش می‌دهد', baseCost: 1500 },
+        { id: 'autoTap', name: 'ربات خودکار', icon: '🤖', desc: 'در هر ثانیه ۵ سکه بدون کلیک می‌دهد', baseCost: 3000 },
+        { id: 'recharge', name: 'سرعت شارژ', icon: '⚡', desc: 'سرعت پر شدن انرژی را افزایش می‌دهد', baseCost: 2500 }
+    ];
+
+    function renderUpgrades() {
+        document.getElementById('upgrades-container').innerHTML = upgradesList.map(u => {
+            let lvl = db.data.upgrades[u.id];
+            let cost = u.baseCost * Math.pow(1.6, lvl - 1);
+            let can = db.data.score >= cost;
+            return `
+                <div class="upg-card">
+                    <div class="upg-info">
+                        <div class="upg-icon">${u.icon}</div>
+                        <div>
+                            <div class="upg-title">${u.name} (سطح ${lvl})</div>
+                            <div class="upg-desc">${u.desc}</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" ${can ? '' : 'disabled'} onclick="buyUpgrade('${u.id}', ${cost})">
+                        ${db.format(Math.floor(cost))} 🪙
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buyUpgrade(id, cost) {
+        if (db.data.score < cost) return;
+        db.data.score -= cost;
+        if (id === 'multiTap') db.data.upgrades.multiTap *= 2;
+        if (id === 'energyLimit') { db.data.upgrades.energyLimit += 1; db.data.maxEnergy += 500; }
+        if (id === 'autoTap') db.data.upgrades.autoTap += 1;
+        if (id === 'recharge') db.data.upgrades.recharge *= 2;
+        db.save();
+        renderUpgrades();
+        toast('ارتقا انجام شد!');
+    }
+
+    function renderLeaderboard() {
+        const bots = [
+            { name: '👑 GalacticLord', score: 1250420 },
+            { name: '🥈 CryptoKing', score: 982100 },
+            { name: '🥉 NeonBlade', score: 850100 },
+            { name: 'GhostRider', score: 615200 },
+            { name: 'AlphaWolf', score: 412100 }
+        ].sort((a, b) => b.score - a.score);
+
+        document.getElementById('leaderboard-list').innerHTML = bots.map(b => `
+            <div class="list-item">
+                <span style="font-weight:bold;">${b.name}</span>
+                <span style="color:var(--gold); font-weight:900;">${db.format(b.score)}</span>
+            </div>
+        `).join('') + `
+            <div class="list-item" style="border-right-color:var(--primary); background:rgba(0,229,255,0.05);">
+                <span style="font-weight:bold;">شما</span>
+                <span style="color:var(--primary); font-weight:900;">${db.format(db.data.score)}</span>
+            </div>
+        `;
+    }
+
+    let loop = null;
+
+    function openGame(id) {
+        const modal = document.getElementById('game-modal');
+        modal.classList.add('show');
+        const game = gamesList.find(g => g.id === id);
+        document.getElementById('game-title').innerText = game.name;
+        document.getElementById('game-desc').innerText = game.desc;
+        document.getElementById('game-high').innerText = db.format(db.getRecord(id));
+        document.getElementById('game-score').innerText = '0';
+
+        const c = document.getElementById('game-content');
+        c.innerHTML = '';
+        if (loop) clearInterval(loop);
+        playSound(400, 'sine', 0.2);
+
+        if (id === 'tapper') {
+            c.innerHTML = `<div id="g-tap" style="width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,0.1),transparent);border:3px solid var(--primary);margin:16px auto;display:flex;justify-content:center;align-items:center;font-size:50px;cursor:pointer;">🌌</div>`;
+            let score = 0;
+            document.getElementById('g-tap').onclick = () => {
+                score++;
+                db.addScore(1);
+                document.getElementById('game-score').innerText = score;
+                if (score > db.getRecord(id)) document.getElementById('game-high').innerText = score;
+                playSound(700, 'square', 0.05);
+            };
+        } else if (id === 'memory') {
+            const emojis = ['🍎', '🍌', '🍇', '🍉', '🍓', '🍒'];
+            const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+            let html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">';
+            cards.forEach((card, i) => { html += `<div id="m-${i}" class="memory-card" onclick="flipMem(${i},'${card}')"></div>`; });
+            c.innerHTML = html + '</div>';
+            let opened = [], matched = 0;
+            window.flipMem = (i, e) => {
+                const el = document.getElementById(`m-${i}`);
+                if (el.innerText || opened.length === 2) return;
+                el.innerText = e;
+                el.classList.add('flipped');
+                playSound(600, 'sine', 0.05);
+                opened.push({ i, e });
+                if (opened.length === 2) {
+                    if (opened[0].e === opened[1].e) {
+                        matched++;
+                        db.addScore(20);
+                        document.getElementById('game-score').innerText = matched * 20;
+                        opened = [];
+                        if (matched === 6) { toast('آفرین! بردی.'); setTimeout(closeGame, 1200); }
+                    } else {
+                        setTimeout(() => {
+                            document.getElementById(`m-${opened[0].i}`).innerText = '';
+                            document.getElementById(`m-${opened[0].i}`).classList.remove('flipped');
+                            document.getElementById(`m-${opened[1].i}`).innerText = '';
+                            document.getElementById(`m-${opened[1].i}`).classList.remove('flipped');
+                            opened = [];
+                        }, 700);
+                    }
+                }
+            };
+        } else if (id === 'reaction') {
+            c.innerHTML = `<div id="r-box" style="width:100%;height:200px;border-radius:16px;display:flex;justify-content:center;align-items:center;font-size:20px;font-weight:bold;background:var(--secondary);cursor:pointer;">منتظر بمان...</div>`;
+            const box = document.getElementById('r-box');
+            let start = 0;
+            const timeout = setTimeout(() => {
+                box.style.background = 'var(--success)';
+                box.innerText = 'کلیک کن!';
+                playSound(900, 'sine', 0.1);
+                start = Date.now();
+            }, Math.random() * 2500 + 1500);
+            box.onclick = () => {
+                if (!start) {
+                    box.innerText = 'خیلی زود زدی!';
+                    box.style.background = 'var(--secondary)';
+                    clearTimeout(timeout);
+                    playSound(200, 'sawtooth', 0.2);
+                } else {
+                    const t = Date.now() - start;
+                    box.innerText = t + ' میلی‌ثانیه';
+                    box.style.background = 'var(--primary)';
+                    const pts = Math.max(1, Math.floor(1000 / t) * 5);
+                    db.addScore(pts);
+                    document.getElementById('game-score').innerText = pts;
+                    db.setRecord(id, t);
+                    setTimeout(closeGame, 1800);
+                }
+            };
+        } else if (id === 'math') {
+            c.innerHTML = `<h1 id="m-q" style="font-size:36px;margin:16px 0;color:var(--primary);">? + ?</h1><input type="number" id="m-i" class="input-field" placeholder="پاسخ؟"><button class="btn" onclick="checkM()">تایید</button>`;
+            let ans = 0, score = 0;
+            const newM = () => {
+                const a = Math.floor(Math.random() * 20) + 1, b = Math.floor(Math.random() * 20) + 1, op = Math.random() > 0.5 ? '+' : '-';
+                ans = op === '+' ? a + b : a - b;
+                document.getElementById('m-q').innerText = `${a} ${op} ${b} = ?`;
+            };
+            newM();
+            window.checkM = () => {
+                if (parseInt(document.getElementById('m-i').value) === ans) {
+                    score += 10;
+                    db.addScore(10);
+                    document.getElementById('game-score').innerText = score;
+                    newM();
+                    document.getElementById('m-i').value = '';
+                    playSound(800, 'triangle', 0.1);
+                } else {
+                    toast('اشتباه بود!');
+                    playSound(200, 'sawtooth', 0.1);
+                }
+            };
+        } else if (id === 'target') {
+            c.innerHTML = `<div style="font-weight:bold;color:var(--secondary);margin-bottom:8px;font-size:16px;">زمان: <span id="t-t">15</span></div><div id="t-a" style="width:100%;height:220px;background:rgba(0,0,0,0.5);border-radius:16px;border:1px solid var(--primary);position:relative;overflow:hidden;"></div>`;
+            let time = 15, score = 0;
+            const area = document.getElementById('t-a');
+            const spawn = () => {
+                if (time <= 0) return;
+                const el = document.createElement('div');
+                el.innerText = '🎯';
+                el.style.position = 'absolute';
+                el.style.fontSize = '36px';
+                el.style.left = Math.random() * 80 + '%';
+                el.style.top = Math.random() * 80 + '%';
+                el.onclick = () => {
+                    el.remove();
+                    score += 10;
+                    db.addScore(10);
+                    document.getElementById('game-score').innerText = score;
+                    playSound(850, 'square', 0.05);
+                    spawn();
+                };
+                area.appendChild(el);
+                setTimeout(() => { if (el.parentNode) el.remove(); }, 700);
+            };
+            spawn();
+            loop = setInterval(() => {
+                time--;
+                document.getElementById('t-t').innerText = time;
+                if (time <= 0) { clearInterval(loop); toast('پایان بازی!'); setTimeout(closeGame, 1000); }
+            }, 1000);
+        } else if (id === 'word') {
+            const words = ['برنامه', 'اینترنت', 'تلگرام', 'دیتابیس', 'امنیت', 'شبکه', 'کامپیوتر'];
+            const target = words[Math.floor(Math.random() * words.length)];
+            c.innerHTML = `<h2 style="font-size:30px;letter-spacing:6px;margin:16px 0;color:var(--gold);">${target.split('').sort(() => Math.random() - 0.5).join('')}</h2><input type="text" id="w-i" class="input-field" placeholder="کلمه صحیح..."><button class="btn" onclick="checkW('${target}')">تایید</button>`;
+            window.checkW = (w) => {
+                if (document.getElementById('w-i').value === w) {
+                    db.addScore(50);
+                    toast('درست بود! +50');
+                    playSound(1000, 'sine', 0.2);
+                    setTimeout(closeGame, 1000);
+                } else {
+                    toast('اشتباه بود!');
+                    playSound(200, 'sawtooth', 0.1);
+                }
+            };
+        } else if (id === 'wheel') {
+            c.innerHTML = `<div style="font-size:80px;margin:16px 0;transition:transform 0.8s;" id="w-v">🎡</div><button class="btn" onclick="spin()">چرخاندن (۵۰ سکه)</button>`;
+            window.spin = () => {
+                if (db.data.score < 50) return toast('سکه کافی نیست!');
+                db.data.score -= 50;
+                db.save();
+                document.getElementById('w-v').style.transform = `rotate(${Math.random() * 720 + 720}deg)`;
+                playSound(400, 'triangle', 0.4);
+                setTimeout(() => {
+                    const w = Math.floor(Math.random() * 200) + 10;
+                    db.addScore(w);
+                    toast(`بردی! +${w}`);
+                    playSound(900, 'sine', 0.2);
+                }, 800);
+            };
+        } else if (id === 'rps') {
+            c.innerHTML = `<div style="display:flex;gap:8px;justify-content:center;margin:16px 0;"><button class="btn" onclick="rps('✊')">✊</button><button class="btn" onclick="rps('✋')">✋</button><button class="btn" onclick="rps('✌️')">✌️</button></div><div id="r-m" style="font-weight:bold;font-size:18px;margin-top:10px;"></div>`;
+            window.rps = (c) => {
+                const b = ['✊', '✋', '✌️'][Math.floor(Math.random() * 3)];
+                const m = document.getElementById('r-m');
+                if (c === b) { m.innerText = 'مساوی!'; m.style.color = 'var(--muted)'; }
+                else if ((c === '✊' && b === '✌️') || (c === '✋' && b === '✊') || (c === '✌️' && b === '✋')) {
+                    m.innerText = 'بردی!';
+                    m.style.color = 'var(--success)';
+                    db.addScore(10);
+                    playSound(900, 'sine', 0.1);
+                } else {
+                    m.innerText = 'باختی!';
+                    m.style.color = 'var(--secondary)';
+                    playSound(200, 'sawtooth', 0.1);
+                }
+            };
+        } else if (id === 'higher') {
+            c.innerHTML = `<h1 id="h-n" style="font-size:50px;margin:16px 0;color:var(--primary);">?</h1><div style="display:flex;gap:8px;"><button class="btn" onclick="guessH(true)">بالاتر</button><button class="btn" onclick="guessH(false)">پایین‌تر</button></div>`;
+            let cur = Math.floor(Math.random() * 100);
+            document.getElementById('h-n').innerText = cur;
+            window.guessH = (up) => {
+                const next = Math.floor(Math.random() * 100);
+                if ((up && next > cur) || (!up && next < cur)) {
+                    db.addScore(15);
+                    toast('بردی! +15');
+                    playSound(900, 'sine', 0.1);
+                } else {
+                    toast('باختی!');
+                    playSound(200, 'sawtooth', 0.1);
+                }
+                cur = next;
+                document.getElementById('h-n').innerText = cur;
+            };
+        } else if (id === 'color') {
+            const colors = ['قرمز', 'آبی', 'سبز', 'زرد'];
+            const cHex = { 'قرمز': '#ff0000', 'آبی': '#0000ff', 'سبز': '#00ff00', 'زرد': '#ffff00' };
+            const word = colors[Math.floor(Math.random() * 4)];
+            const color = colors[Math.floor(Math.random() * 4)];
+            c.innerHTML = `<h1 style="font-size:36px;color:${cHex[color]};margin:16px 0;">${word}</h1><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="c-g"></div>`;
+            document.getElementById('c-g').innerHTML = colors.map(cl => `<button class="btn" style="border-color:${cHex[cl]};color:${cHex[cl]};" onclick="pickColor('${cl}','${color}')">${cl}</button>`).join('');
+            window.pickColor = (picked, correct) => {
+                if (picked === correct) {
+                    db.addScore(15);
+                    toast('درست! +15');
+                    playSound(900, 'sine', 0.1);
+                    setTimeout(() => openGame('color'), 600);
+                } else {
+                    toast('اشتباه!');
+                    playSound(200, 'sawtooth', 0.1);
+                }
+            };
+        } else if (id === 'clicker') {
+            c.innerHTML = `<div id="c-t" style="font-size:60px;margin:16px 0;cursor:pointer;text-align:center;">🪙</div><div style="color:var(--secondary);font-weight:bold;text-align:center;font-size:16px;">زمان: <span id="c-tt">10</span></div>`;
+            let t = 10, s = 0;
+            document.getElementById('c-t').onclick = () => {
+                if (t > 0) {
+                    s++;
+                    db.addScore(1);
+                    document.getElementById('game-score').innerText = s;
+                    playSound(700, 'square', 0.05);
+                }
+            };
+            loop = setInterval(() => {
+                t--;
+                document.getElementById('c-tt').innerText = t;
+                if (t <= 0) {
+                    clearInterval(loop);
+                    db.setRecord(id, s);
+                    toast('پایان!');
+                    setTimeout(closeGame, 1000);
+                }
+            }, 1000);
+        } else if (id === 'miner') {
+            c.innerHTML = `<div style="font-size:60px;margin:16px 0;transition:transform 0.1s;" id="rock">🪨</div><div class="progress-bar"><div class="progress-fill" id="mine-bar"></div></div><button class="btn" style="margin-top:16px;" onclick="dig()">حفاری</button>`;
+            window.dig = () => {
+                const bar = document.getElementById('mine-bar');
+                let p = 0;
+                document.getElementById('rock').style.transform = 'rotate(15deg) translateY(4px)';
+                setTimeout(() => document.getElementById('rock').style.transform = 'rotate(0deg) translateY(0)', 100);
+                playSound(300, 'square', 0.1);
+                const int = setInterval(() => {
+                    p += 20;
+                    bar.style.width = p + '%';
+                    if (p >= 100) {
+                        clearInterval(int);
+                        bar.style.width = '0%';
+                        const loot = Math.floor(Math.random() * 50) + 10;
+                        db.addScore(loot);
+                        toast(`سنگ پیدا کردی! +${loot}`);
+                        playSound(700, 'sine', 0.15);
+                    }
+                }, 100);
+            };
+        }
+    }
+
+    function closeGame() {
+        document.getElementById('game-modal').classList.remove('show');
+        if (loop) clearInterval(loop);
+    }
+
+    const urlP = new URLSearchParams(window.location.search).get('game');
+    if (urlP && gamesList.some(g => g.id === urlP)) {
+        setTimeout(() => openGame(urlP), 400);
+    }
+
+    db.updateUI();
+    renderUpgrades();
+</script>
+
+</body>
+</html>
