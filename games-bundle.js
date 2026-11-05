@@ -4779,3 +4779,1083 @@ window.Game_match3 = class extends GameBase {
         if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
     }
 };
+window.Game_shooter = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(800);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.shipW = 40;
+        this.shipH = 40;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._move = (e) => {
+            if (this.state !== 'playing' || !e.buttons) {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.player.x = clamp(e.clientX - r.left - this.shipW / 2, 0, this.w - this.shipW);
+            this.player.y = clamp(e.clientY - r.top - this.shipH / 2 - 30, 60, this.h - this.shipH);
+        };
+        this.canvas.addEventListener('pointermove', this._move);
+
+        this._key = (e) => {
+            if (this.state === 'playing') {
+                if (e.key === 'ArrowLeft' || e.key === 'a') this.keyLeft = true;
+                if (e.key === 'ArrowRight' || e.key === 'd') this.keyRight = true;
+                if (e.key === 'ArrowUp' || e.key === 'w') this.keyUp = true;
+                if (e.key === 'ArrowDown' || e.key === 's') this.keyDown = true;
+            }
+        };
+        this._keyUp = (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') this.keyLeft = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') this.keyRight = false;
+            if (e.key === 'ArrowUp' || e.key === 'w') this.keyUp = false;
+            if (e.key === 'ArrowDown' || e.key === 's') this.keyDown = false;
+        };
+        window.addEventListener('keydown', this._key);
+        window.addEventListener('keyup', this._keyUp);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.score = 0;
+        this.lives = 3;
+        this.time = 0;
+        this.spawnTimer = 0;
+        this.spawnInterval = 1.2;
+        this.fireTimer = 0;
+        this.difficulty = 1;
+        
+        this.player = {
+            x: this.w / 2 - this.shipW / 2,
+            y: this.h - 120,
+            w: this.shipW,
+            h: this.shipH,
+            invuln: 0
+        };
+        
+        this.bullets = [];
+        this.enemies = [];
+        this.powerups = [];
+        this.stars = [];
+        
+        for (let i = 0; i < 150; i++) {
+            this.stars.push({
+                x: Math.random() * this.w,
+                y: Math.random() * this.h,
+                s: Math.random() * 2 + 1,
+                speed: Math.random() * 300 + 100
+            });
+        }
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">❤️ ${this.lives}</div>
+        `);
+    }
+
+    spawnEnemy() {
+        const w = rand(30, 60);
+        const h = rand(30, 60);
+        const hp = Math.random() < 0.2 ? 3 + this.difficulty : 1;
+        
+        this.enemies.push({
+            x: rand(20, this.w - w - 20),
+            y: -h - 20,
+            w: w,
+            h: h,
+            hp: hp,
+            maxHp: hp,
+            vy: rand(100, 200) + this.difficulty * 20,
+            vx: rand(-80, 80),
+            type: hp > 1 ? 'tank' : 'basic'
+        });
+    }
+
+    dropPowerup(x, y) {
+        if (Math.random() < 0.15) {
+            const types = ['heal', 'multi'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            this.powerups.push({
+                x: x,
+                y: y,
+                w: 24,
+                h: 24,
+                vy: 100,
+                type: type
+            });
+        }
+    }
+
+    gameOver() {
+        this.state = 'dead';
+        AudioEngine.lose();
+        Haptics.heavy();
+        Camera.add(2);
+        setTimeout(() => {
+            App.gameOver('shooter', this.score);
+        }, 1000);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        this.time += dt;
+
+        for (const s of this.stars) {
+            s.y += s.speed * dt;
+            if (s.y > this.h) {
+                s.y = 0;
+                s.x = Math.random() * this.w;
+            }
+        }
+
+        if (this.state !== 'playing') {
+            return;
+        }
+
+        if (this.keyLeft) this.player.x = clamp(this.player.x - 450 * dt, 0, this.w - this.player.w);
+        if (this.keyRight) this.player.x = clamp(this.player.x + 450 * dt, 0, this.w - this.player.w);
+        if (this.keyUp) this.player.y = clamp(this.player.y - 450 * dt, 60, this.h - this.player.h);
+        if (this.keyDown) this.player.y = clamp(this.player.y + 450 * dt, 60, this.h - this.player.h);
+
+        if (this.player.invuln > 0) {
+            this.player.invuln -= dt;
+        }
+
+        this.fireTimer += dt;
+        if (this.fireTimer > 0.15) {
+            this.fireTimer = 0;
+            this.bullets.push({
+                x: this.player.x + this.player.w / 2,
+                y: this.player.y,
+                vy: -900
+            });
+            AudioEngine.tone(900, 0.02, 'square', 0.03);
+        }
+
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+            const b = this.bullets[i];
+            b.y += b.vy * dt;
+            if (b.y < 0) {
+                this.bullets.splice(i, 1);
+            }
+        }
+
+        this.difficulty = 1 + Math.floor(this.score / 500);
+        this.spawnInterval = Math.max(0.3, 1.2 - this.difficulty * 0.1);
+        
+        this.spawnTimer += dt;
+        if (this.spawnTimer > this.spawnInterval) {
+            this.spawnTimer = 0;
+            this.spawnEnemy();
+        }
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const e = this.enemies[i];
+            e.y += e.vy * dt;
+            e.x += e.vx * dt;
+
+            if (e.x < 0 || e.x + e.w > this.w) {
+                e.vx *= -1;
+            }
+
+            if (e.y > this.h) {
+                this.enemies.splice(i, 1);
+                this.lives--;
+                this.updateHud();
+                Camera.add(1);
+                Haptics.heavy();
+                if (this.lives <= 0) {
+                    return this.gameOver();
+                }
+                continue;
+            }
+
+            const cx = this.player.x + this.player.w / 2;
+            const cy = this.player.y + this.player.h / 2;
+            
+            if (e.x < cx + 15 && e.x + e.w > cx - 15 && e.y < cy + 15 && e.y + e.h > cy - 15) {
+                if (this.player.invuln <= 0) {
+                    this.enemies.splice(i, 1);
+                    this.lives--;
+                    this.player.invuln = 2;
+                    this.updateHud();
+                    Camera.add(1.5);
+                    Haptics.heavy();
+                    AudioEngine.hit();
+                    
+                    Particles.burst(cx, cy, 40, {
+                        color: '#ff2d78',
+                        minSpeed: 150,
+                        maxSpeed: 400,
+                        gravity: 300
+                    });
+                    
+                    if (this.lives <= 0) {
+                        return this.gameOver();
+                    }
+                }
+                continue;
+            }
+
+            for (let j = this.bullets.length - 1; j >= 0; j--) {
+                const b = this.bullets[j];
+                if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h) {
+                    this.bullets.splice(j, 1);
+                    e.hp--;
+                    Particles.burst(b.x, b.y, 4, {
+                        color: '#fff',
+                        minSpeed: 50,
+                        maxSpeed: 150
+                    });
+                    
+                    if (e.hp <= 0) {
+                        this.enemies.splice(i, 1);
+                        this.score += e.type === 'tank' ? 50 : 20;
+                        this.updateHud();
+                        AudioEngine.tone(300, 0.1, 'sawtooth', 0.1);
+                        Haptics.light();
+                        Camera.add(0.2);
+                        
+                        Particles.burst(e.x + e.w / 2, e.y + e.h / 2, 30, {
+                            color: e.type === 'tank' ? '#a855f7' : '#ffc531',
+                            minSpeed: 100,
+                            maxSpeed: 350,
+                            gravity: 200
+                        });
+                        
+                        this.dropPowerup(e.x + e.w / 2, e.y + e.h / 2);
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (let i = this.powerups.length - 1; i >= 0; i--) {
+            const p = this.powerups[i];
+            p.y += p.vy * dt;
+            
+            if (p.y > this.h) {
+                this.powerups.splice(i, 1);
+                continue;
+            }
+
+            const cx = this.player.x + this.player.w / 2;
+            const cy = this.player.y + this.player.h / 2;
+            
+            if (p.x < cx + 20 && p.x + p.w > cx - 20 && p.y < cy + 20 && p.y + p.h > cy - 20) {
+                this.powerups.splice(i, 1);
+                AudioEngine.win();
+                Haptics.success();
+                
+                if (p.type === 'heal') {
+                    this.lives++;
+                    this.updateHud();
+                } else if (p.type === 'multi') {
+                    this.score += 100;
+                    this.updateHud();
+                }
+                
+                Particles.burst(p.x + p.w / 2, p.y + p.h / 2, 20, {
+                    color: p.type === 'heal' ? '#2bff88' : '#00e5ff',
+                    minSpeed: 100,
+                    maxSpeed: 300
+                });
+            }
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        for (const s of this.stars) {
+            ctx.fillStyle = `rgba(255,255,255,${s.s / 3})`;
+            ctx.fillRect(s.x, s.y, s.s, s.s * 2);
+        }
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#ff2d78';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#ff2d78';
+            ctx.shadowBlur = 30;
+            ctx.fillText('SPACE SHOOTER', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        for (const b of this.bullets) {
+            ctx.fillStyle = '#00e5ff';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(b.x - 3, b.y, 6, 20);
+            ctx.shadowBlur = 0;
+        }
+
+        for (const p of this.powerups) {
+            const color = p.type === 'heal' ? '#2bff88' : '#00e5ff';
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(p.x + p.w / 2, p.y + p.h / 2, p.w / 2, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(p.type === 'heal' ? '❤️' : '⭐', p.x + p.w / 2, p.y + p.h / 2 + 2);
+        }
+
+        for (const e of this.enemies) {
+            ctx.fillStyle = e.type === 'tank' ? '#a855f7' : '#ff2d78';
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.shadowBlur = 20;
+            
+            ctx.beginPath();
+            if (e.type === 'tank') {
+                ctx.roundRect(e.x, e.y, e.w, e.h, 10);
+            } else {
+                ctx.moveTo(e.x + e.w / 2, e.y + e.h);
+                ctx.lineTo(e.x + e.w, e.y);
+                ctx.lineTo(e.x, e.y);
+                ctx.closePath();
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            if (e.maxHp > 1) {
+                const ratio = e.hp / e.maxHp;
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(e.x, e.y + e.h + 5, e.w, 4);
+                ctx.fillStyle = '#2bff88';
+                ctx.fillRect(e.x, e.y + e.h + 5, e.w * ratio, 4);
+            }
+        }
+
+        Particles.render(ctx);
+
+        const p = this.player;
+        ctx.save();
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        
+        if (p.invuln > 0 && Math.floor(this.time * 20) % 2 === 0) {
+            ctx.globalAlpha = 0.3;
+        }
+        
+        ctx.fillStyle = '#00e5ff';
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 25;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, -p.h / 2);
+        ctx.lineTo(p.w / 2, p.h / 2);
+        ctx.lineTo(0, p.h / 4);
+        ctx.lineTo(-p.w / 2, p.h / 2);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffc531';
+        ctx.beginPath();
+        ctx.moveTo(-6, p.h / 4);
+        ctx.lineTo(0, p.h / 2 + Math.random() * 20);
+        ctx.lineTo(6, p.h / 4);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+        if (this._move) this.canvas.removeEventListener('pointermove', this._move);
+        if (this._key) window.removeEventListener('keydown', this._key);
+        if (this._keyUp) window.removeEventListener('keyup', this._keyUp);
+    }
+};
+
+window.Game_clicker = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(500);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'playing';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.coreX = this.w / 2;
+        this.coreY = this.h * 0.35;
+        this.coreR = Math.min(this.w, this.h) * 0.15;
+        
+        this.btnW = (this.w - 80) / 2;
+        this.btnH = 80;
+        this.btnY = this.h - 180;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            const r = this.canvas.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+
+            if (y >= this.btnY && y <= this.btnY + this.btnH) {
+                if (x >= 40 && x <= 40 + this.btnW) {
+                    this.buyClick();
+                } else if (x >= 40 + this.btnW + 20 && x <= this.w - 40) {
+                    this.buyAuto();
+                }
+                return;
+            }
+
+            const d = Math.hypot(x - this.coreX, y - this.coreY);
+            if (d < this.coreR + 30) {
+                this.clickCore(x, y);
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._key = (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                this.clickCore(this.coreX, this.coreY);
+            }
+        };
+        window.addEventListener('keydown', this._key);
+    }
+
+    startGame() {
+        this.coins = 0;
+        this.clickPower = 1;
+        this.autoPower = 0;
+        this.clickCost = 15;
+        this.autoCost = 50;
+        this.pulse = 0;
+        this.floatingTexts = [];
+        this.autoTimer = 0;
+        this.updateHud();
+    }
+
+    clickCore(x, y) {
+        this.coins += this.clickPower;
+        this.pulse = 1;
+        AudioEngine.tone(600 + Math.random() * 100, 0.05, 'sine', 0.1);
+        Haptics.light();
+        Camera.add(0.05);
+
+        const colors = ['#00e5ff', '#ffc531', '#2bff88'];
+        Particles.burst(x, y, 15, {
+            color: colors[Math.floor(Math.random() * colors.length)],
+            minSpeed: 100,
+            maxSpeed: 300,
+            gravity: 300
+        });
+
+        this.floatingTexts.push({
+            x: x,
+            y: y,
+            text: '+' + this.clickPower,
+            life: 1.2,
+            max: 1.2,
+            vy: -120
+        });
+        this.updateHud();
+    }
+
+    buyClick() {
+        if (this.coins < this.clickCost) {
+            AudioEngine.tone(200, 0.1, 'sawtooth', 0.1);
+            Haptics.heavy();
+            return;
+        }
+        this.coins -= this.clickCost;
+        this.clickPower++;
+        this.clickCost = Math.floor(this.clickCost * 1.6);
+        AudioEngine.win();
+        Haptics.success();
+        Camera.add(0.3);
+        
+        Particles.burst(40 + this.btnW / 2, this.btnY + this.btnH / 2, 30, {
+            color: '#00e5ff',
+            minSpeed: 100,
+            maxSpeed: 400
+        });
+        this.updateHud();
+    }
+
+    buyAuto() {
+        if (this.coins < this.autoCost) {
+            AudioEngine.tone(200, 0.1, 'sawtooth', 0.1);
+            Haptics.heavy();
+            return;
+        }
+        this.coins -= this.autoCost;
+        this.autoPower++;
+        this.autoCost = Math.floor(this.autoCost * 1.8);
+        AudioEngine.win();
+        Haptics.success();
+        Camera.add(0.3);
+        
+        Particles.burst(40 + this.btnW + 20 + this.btnW / 2, this.btnY + this.btnH / 2, 30, {
+            color: '#ff2d78',
+            minSpeed: 100,
+            maxSpeed: 400
+        });
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">سکه <b>${Math.floor(this.coins)}</b></div>
+            <div class="hud-pill">💰 ${Math.floor(this.autoPower)}/s</div>
+        `);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        this.pulse = Math.max(0, this.pulse - dt * 6);
+
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+            const ft = this.floatingTexts[i];
+            ft.life -= dt;
+            ft.y += ft.vy * dt;
+            if (ft.life <= 0) {
+                this.floatingTexts.splice(i, 1);
+            }
+        }
+
+        if (this.autoPower > 0) {
+            this.autoTimer += dt;
+            if (this.autoTimer >= 0.1) {
+                this.autoTimer = 0;
+                this.coins += this.autoPower * 0.1;
+                
+                Particles.burst(this.coreX + rand(-this.coreR, this.coreR), this.coreY + rand(-this.coreR, this.coreR), 1, {
+                    color: '#ffc531',
+                    minSpeed: 20,
+                    maxSpeed: 80,
+                    gravity: -100
+                });
+                
+                this.updateHud();
+            }
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        const scale = 1 + this.pulse * 0.15;
+        
+        ctx.save();
+        ctx.translate(this.coreX, this.coreY);
+        ctx.scale(scale, scale);
+        
+        const cg = ctx.createRadialGradient(0, 0, 10, 0, 0, this.coreR);
+        cg.addColorStop(0, '#fff');
+        cg.addColorStop(0.3, '#00e5ff');
+        cg.addColorStop(1, '#0088cc');
+        
+        ctx.fillStyle = cg;
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 50;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.coreR, 0, 6.28);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#05070d';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.coreR * 0.7, 0, 6.28);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffc531';
+        ctx.font = `bold ${this.coreR * 0.4}px Tahoma`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💰', 0, 0);
+        
+        ctx.restore();
+
+        Particles.render(ctx);
+
+        for (const ft of this.floatingTexts) {
+            ctx.globalAlpha = ft.life / ft.max;
+            ctx.fillStyle = '#ffc531';
+            ctx.font = 'bold 24px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.fillText(ft.text, ft.x, ft.y);
+            ctx.globalAlpha = 1;
+        }
+
+        ctx.fillStyle = 'rgba(0,229,255,0.1)';
+        ctx.strokeStyle = 'rgba(0,229,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(40, this.btnY, this.btnW, this.btnH, 15);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 16px Tahoma';
+        ctx.textAlign = 'center';
+        ctx.fillText('ارتقای کلیک', 40 + this.btnW / 2, this.btnY + 25);
+        ctx.font = '14px Tahoma';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('توان: ' + this.clickPower, 40 + this.btnW / 2, this.btnY + 50);
+        ctx.fillStyle = '#ffc531';
+        ctx.fillText('قیمت: ' + this.clickCost, 40 + this.btnW / 2, this.btnY + 70);
+
+        ctx.fillStyle = 'rgba(255,45,120,0.1)';
+        ctx.strokeStyle = 'rgba(255,45,120,0.4)';
+        ctx.beginPath();
+        ctx.roundRect(40 + this.btnW + 20, this.btnY, this.btnW, this.btnH, 15);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff2d78';
+        ctx.font = 'bold 16px Tahoma';
+        ctx.fillText('کلیکر خودکار', 40 + this.btnW + 20 + this.btnW / 2, this.btnY + 25);
+        ctx.font = '14px Tahoma';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('سرعت: ' + this.autoPower + '/s', 40 + this.btnW + 20 + this.btnW / 2, this.btnY + 50);
+        ctx.fillStyle = '#ffc531';
+        ctx.fillText('قیمت: ' + this.autoCost, 40 + this.btnW + 20 + this.btnW / 2, this.btnY + 70);
+
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+        if (this._key) window.removeEventListener('keydown', this._key);
+    }
+};
+
+window.Game_tower = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(500);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.path = [
+            { x: 0, y: this.h * 0.3 },
+            { x: this.w * 0.4, y: this.h * 0.3 },
+            { x: this.w * 0.4, y: this.h * 0.7 },
+            { x: this.w, y: this.h * 0.7 }
+        ];
+        
+        this.pathLength = 0;
+        for (let i = 0; i < this.path.length - 1; i++) {
+            this.pathLength += dist(this.path[i].x, this.path[i].y, this.path[i+1].x, this.path[i+1].y);
+        }
+        
+        this.towerBtnY = this.h - 80;
+        this.towerBtnH = 60;
+        this.towerBtnW = 200;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+            
+            const r = this.canvas.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+
+            if (this.placingTower) {
+                if (y < this.towerBtnY - 20) {
+                    this.towers.push({
+                        x: x,
+                        y: y,
+                        range: 100,
+                        dmg: 10,
+                        cooldown: 0,
+                        fireRate: 0.6
+                    });
+                    this.gold -= 50;
+                    this.placingTower = false;
+                    this.updateHud();
+                    AudioEngine.win();
+                    Haptics.success();
+                }
+                return;
+            }
+
+            if (x >= this.w / 2 - this.towerBtnW / 2 && x <= this.w / 2 + this.towerBtnW / 2 && y >= this.towerBtnY && y <= this.towerBtnY + this.towerBtnH) {
+                if (this.gold >= 50) {
+                    this.placingTower = true;
+                } else {
+                    AudioEngine.tone(200, 0.1, 'sawtooth', 0.1);
+                    Haptics.heavy();
+                }
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.enemies = [];
+        this.towers = [];
+        this.bullets = [];
+        this.gold = 150;
+        this.lives = 10;
+        this.wave = 1;
+        this.spawnTimer = 0;
+        this.spawnInterval = 2.5;
+        this.spawnCount = 0;
+        this.enemiesThisWave = 5;
+        this.placingTower = false;
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">💰 ${this.gold}</div>
+            <div class="hud-pill">❤️ ${this.lives}</div>
+            <div class="hud-pill">موج ${this.wave}</div>
+        `);
+    }
+
+    getPathPos(progress) {
+        let remain = progress;
+        for (let i = 0; i < this.path.length - 1; i++) {
+            const p1 = this.path[i];
+            const p2 = this.path[i+1];
+            const d = dist(p1.x, p1.y, p2.x, p2.y);
+            if (remain <= d) {
+                const ratio = remain / d;
+                return {
+                    x: p1.x + (p2.x - p1.x) * ratio,
+                    y: p1.y + (p2.y - p1.y) * ratio
+                };
+            }
+            remain -= d;
+        }
+        return this.path[this.path.length - 1];
+    }
+
+    gameOver() {
+        this.state = 'dead';
+        AudioEngine.lose();
+        Haptics.heavy();
+        Camera.add(2);
+        setTimeout(() => {
+            App.gameOver('tower', this.wave * 100);
+        }, 1000);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        if (this.state !== 'playing') {
+            return;
+        }
+
+        this.spawnTimer += dt;
+        if (this.spawnTimer > this.spawnInterval && this.spawnCount < this.enemiesThisWave) {
+            this.spawnTimer = 0;
+            this.spawnCount++;
+            
+            this.enemies.push({
+                progress: 0,
+                speed: 80 + this.wave * 10,
+                hp: 20 + this.wave * 15,
+                maxHp: 20 + this.wave * 15
+            });
+        }
+
+        if (this.spawnCount >= this.enemiesThisWave && this.enemies.length === 0) {
+            this.wave++;
+            this.spawnCount = 0;
+            this.enemiesThisWave += 2;
+            this.gold += 50;
+            this.updateHud();
+            AudioEngine.win();
+        }
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const e = this.enemies[i];
+            e.progress += e.speed * dt;
+            
+            if (e.progress >= this.pathLength) {
+                this.enemies.splice(i, 1);
+                this.lives--;
+                this.updateHud();
+                Camera.add(1);
+                Haptics.heavy();
+                
+                Particles.burst(this.w - 20, this.h * 0.7, 30, {
+                    color: '#ff2d78',
+                    minSpeed: 100,
+                    maxSpeed: 300
+                });
+                
+                if (this.lives <= 0) {
+                    return this.gameOver();
+                }
+            }
+        }
+
+        for (const t of this.towers) {
+            t.cooldown -= dt;
+            if (t.cooldown <= 0) {
+                let target = null;
+                let maxProg = -1;
+                
+                for (const e of this.enemies) {
+                    const pos = this.getPathPos(e.progress);
+                    const d = dist(t.x, t.y, pos.x, pos.y);
+                    if (d < t.range && e.progress > maxProg) {
+                        target = e;
+                        maxProg = e.progress;
+                    }
+                }
+                
+                if (target) {
+                    t.cooldown = t.fireRate;
+                    const pos = this.getPathPos(target.progress);
+                    this.bullets.push({
+                        x: t.x,
+                        y: t.y,
+                        targetX: pos.x,
+                        targetY: pos.y,
+                        dmg: t.dmg,
+                        speed: 600
+                    });
+                    AudioEngine.tone(800, 0.05, 'square', 0.05);
+                }
+            }
+        }
+
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+            const b = this.bullets[i];
+            const dx = b.targetX - b.x;
+            const dy = b.targetY - b.y;
+            const d = Math.hypot(dx, dy);
+            
+            if (d < 15) {
+                this.bullets.splice(i, 1);
+                for (const e of this.enemies) {
+                    const pos = this.getPathPos(e.progress);
+                    if (dist(pos.x, pos.y, b.targetX, b.targetY) < 25) {
+                        e.hp -= b.dmg;
+                        Particles.burst(b.targetX, b.targetY, 5, { color: '#ffc531', minSpeed: 50, maxSpeed: 150 });
+                        
+                        if (e.hp <= 0) {
+                            this.enemies.splice(this.enemies.indexOf(e), 1);
+                            this.gold += 15;
+                            this.updateHud();
+                            Particles.burst(pos.x, pos.y, 25, { color: '#ff2d78', minSpeed: 100, maxSpeed: 300 });
+                            AudioEngine.hit();
+                            Haptics.light();
+                            Camera.add(0.1);
+                        }
+                        break;
+                    }
+                }
+            } else {
+                b.x += (dx / d) * b.speed * dt;
+                b.y += (dy / d) * b.speed * dt;
+            }
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#2bff88';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#2bff88';
+            ctx.shadowBlur = 30;
+            ctx.fillText('TOWER DEFENSE', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        ctx.strokeStyle = 'rgba(0,229,255,0.15)';
+        ctx.lineWidth = 40;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.path[0].x, this.path[0].y);
+        for (let i = 1; i < this.path.length; i++) {
+            ctx.lineTo(this.path[i].x, this.path[i].y);
+        }
+        ctx.stroke();
+        
+        ctx.strokeStyle = 'rgba(0,229,255,0.05)';
+        ctx.lineWidth = 30;
+        ctx.stroke();
+
+        for (const t of this.towers) {
+            ctx.fillStyle = 'rgba(43,255,136,0.2)';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, t.range, 0, 6.28);
+            ctx.fill();
+            
+            ctx.fillStyle = '#2bff88';
+            ctx.shadowColor = '#2bff88';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 18, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.fillStyle = '#04101a';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 8, 0, 6.28);
+            ctx.fill();
+        }
+
+        for (const e of this.enemies) {
+            const pos = this.getPathPos(e.progress);
+            ctx.fillStyle = '#ff2d78';
+            ctx.shadowColor = '#ff2d78';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 15, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            const ratio = e.hp / e.maxHp;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(pos.x - 15, pos.y - 25, 30, 4);
+            ctx.fillStyle = '#2bff88';
+            ctx.fillRect(pos.x - 15, pos.y - 25, 30 * ratio, 4);
+        }
+
+        for (const b of this.bullets) {
+            ctx.fillStyle = '#ffc531';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 4, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        Particles.render(ctx);
+
+        if (this.placingTower) {
+            ctx.fillStyle = 'rgba(43,255,136,0.15)';
+            ctx.strokeStyle = '#2bff88';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(Input.pointer.x, Input.pointer.y, 100, 0, 6.28);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = '#2bff88';
+            ctx.beginPath();
+            ctx.arc(Input.pointer.x, Input.pointer.y, 18, 0, 6.28);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.fillText('برای ساخت کلیک کن', Input.pointer.x, Input.pointer.y - 30);
+        }
+
+        ctx.fillStyle = 'rgba(0,229,255,0.1)';
+        ctx.strokeStyle = 'rgba(0,229,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(this.w / 2 - this.towerBtnW / 2, this.towerBtnY, this.towerBtnW, this.towerBtnH, 15);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 16px Tahoma';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ساخت برج (50 💰)', this.w / 2, this.towerBtnY + this.towerBtnH / 2);
+
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+    }
+};
