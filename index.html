@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://telegram.org;">
+<title>GameS Plus | پلتفرم بازی</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root { 
+    --bg: #050510; 
+    --glass: rgba(20, 25, 40, 0.75); 
+    --border: rgba(0, 243, 255, 0.2); 
+    --primary: #00f3ff; 
+    --secondary: #ff0055;
+    --success: #39ff14; 
+    --gold: #ffd700; 
+    --text: #e0e6ed; 
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { 
+    background-color: var(--bg); 
+    background-image: radial-gradient(circle at 50% 0%, #1a103c 0%, #050510 70%); 
+    color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
+}
+
+/* هدر */
+.header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.logo { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--primary); text-shadow: 0 0 10px rgba(0,243,255,0.6); letter-spacing: 1px; }
+.user-panel { display: flex; align-items: center; gap: 15px; }
+.coin-box { background: rgba(0,0,0,0.5); border: 1px solid var(--gold); padding: 5px 15px; border-radius: 20px; font-family: 'Orbitron'; font-size: 14px; font-weight: 700; color: var(--gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+.coin-icon { font-size: 16px; margin-right: 5px; }
+
+/* بخش اصلی و منو */
+.main-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+.section-title { font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+.section-title::before { content: ''; width: 5px; height: 20px; background: var(--primary); border-radius: 3px; box-shadow: 0 0 10px var(--primary); }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+
+/* کارت بازی */
+.card { 
+    background: var(--glass); backdrop-filter: blur(15px); border-radius: 18px; padding: 25px 15px; 
+    display: flex; flex-direction: column; align-items: center; text-align: center; 
+    border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: all 0.2s ease; 
+    position: relative; overflow: hidden;
+}
+.card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, transparent, var(--primary), transparent); opacity: 0; transition: 0.3s; }
+.card:active { transform: scale(0.94); border-color: var(--primary); }
+.card:hover::after { opacity: 1; }
+.card-icon { font-size: 45px; margin-bottom: 12px; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
+.card-title { font-size: 15px; font-weight: 900; margin-bottom: 5px; }
+.card-tag { font-size: 11px; color: #8892b0; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+
+/* مودال بازی */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; }
+.modal-box { 
+    background: var(--glass); width: 95%; max-width: 400px; padding: 25px; border-radius: 24px; 
+    border: 1px solid var(--primary); box-shadow: 0 0 50px rgba(0,243,255,0.15); 
+    text-align: center; position: relative; animation: scaleIn 0.3s ease;
+}
+@keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--secondary); font-size: 26px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.close-btn:active { transform: scale(0.8); }
+.game-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.game-title { font-size: 22px; font-weight: 900; color: var(--primary); text-shadow: 0 0 10px rgba(0,243,255,0.3); }
+.game-stats { display: flex; justify-content: space-between; font-size: 14px; color: #8892b0; margin-top: 10px; }
+.game-stats b { color: var(--gold); }
+
+/* دکمه‌ها و فرم‌ها */
+.btn { 
+    background: transparent; border: 2px solid var(--primary); color: var(--primary); 
+    padding: 14px 20px; border-radius: 14px; font-weight: 900; font-size: 16px; 
+    width: 100%; margin-top: 15px; cursor: pointer; transition: 0.2s; font-family: inherit;
+}
+.btn:active { background: rgba(0,243,255,0.15); transform: scale(0.98); }
+.input-field { 
+    width: 100%; padding: 18px; border-radius: 14px; border: 2px solid var(--border); 
+    background: rgba(0,0,0,0.6); color: var(--primary); text-align: center; 
+    font-size: 28px; font-family: 'Orbitron'; margin-bottom: 15px; outline: none; transition: 0.2s;
+}
+.input-field:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(0,243,255,0.2); }
+
+/* استایل‌های اختصاصی بازی‌ها */
+#reaction-box { width: 100%; height: 200px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 22px; cursor: pointer; transition: 0.3s; }
+.memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.memory-card { height: 70px; background: rgba(0,0,0,0.6); border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: center; align-items: center; font-size: 32px; cursor: pointer; transition: 0.2s; }
+.memory-card:active { transform: scale(0.9); }
+#target-area { position: relative; width: 100%; height: 250px; background: rgba(0,0,0,0.8); border-radius: 18px; overflow: hidden; border: 1px solid var(--border); }
+.target { position: absolute; font-size: 40px; cursor: pointer; transition: transform 0.1s; }
+.target:active { transform: scale(0.8); }
+
+/* سیستم توست (اعلان) */
+#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--glass); border: 1px solid var(--success); color: var(--success); padding: 12px 25px; border-radius: 12px; font-weight: bold; transition: 0.3s; z-index: 1000; opacity: 0; box-shadow: 0 0 20px rgba(57,255,20,0.2); }
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="toast">ذخیره شد!</div>
+
+<div class="header">
+    <div class="logo">GAME<span style="color:var(--secondary)">S</span> PLUS</div>
+    <div class="user-panel">
+        <div class="coin-box"><span class="coin-icon">🪙</span><span id="global-score">0</span></div>
+    </div>
+</div>
+
+<div class="main-area">
+    <div class="section-title">بازی‌های پلتفرم</div>
+    <div class="grid" id="games-container"></div>
+</div>
+
+<div class="modal" id="game-modal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="closeGame()">✕</button>
+        <div class="game-header">
+            <div class="game-title" id="game-title">عنوان بازی</div>
+            <div class="game-stats">
+                <span>رکورد شما: <b id="game-high">0</b></span>
+                <span>امتیاز بازی: <b id="game-score" style="color:var(--success)">0</b></span>
+            </div>
+        </div>
+        <div id="game-content"></div>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// ۱. مدیریت دیتابیس محلی (شبیه‌سازی دیتابیس قوی)
+// ==========================================
+class Database {
+    constructor() {
+        this.key = 'GameSPlus_DB';
+        this.defaultData = {
+            username: 'Player',
+            globalScore: 0,
+            stats: { math: 0, reaction: 9999, memory: 0, target: 0, typing: 0 }
+        };
+        this.data = this.load();
+    }
+    load() {
+        try {
+            const stored = localStorage.getItem(this.key);
+            return stored ? JSON.parse(stored) : this.defaultData;
+        } catch (e) { return this.defaultData; }
+    }
+    save() {
+        localStorage.setItem(this.key, JSON.stringify(this.data));
+        this.updateUI();
+    }
+    updateUI() {
+        document.getElementById('global-score').innerText = this.data.globalScore.toLocaleString('fa-IR');
+    }
+    addScore(amount) {
+        this.data.globalScore += amount;
+        this.save();
+    }
+}
+const db = new Database();
+db.updateUI();
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==========================================
+// ۲. لیست بازی‌ها
+// ==========================================
+const gamesList = [
+    { id: 'math', icon: '🧮', name: 'چالش ریاضی', tag: 'فکری' },
+    { id: 'memory', icon: '🧠', name: 'حافظه تصویری', tag: 'فکری' },
+    { id: 'reaction', icon: '⚡', name: 'زمان واکنش', tag: 'سرعتی' },
+    { id: 'target', icon: '🎯', name: 'هدف‌زنی', tag: 'سرعتی' },
+    { id: 'typing', icon: '⌨️', name: 'سرعت تایپ', tag: 'فکری' }
+];
+
+function renderGames() {
+    const container = document.getElementById('games-container');
+    container.innerHTML = gamesList.map(g => `
+        <div class="card" onclick="openGame('${g.id}')">
+            <div class="card-icon">${g.icon}</div>
+            <div class="card-title">${g.name}</div>
+            <div class="card-tag">${g.tag}</div>
+        </div>
+    `).join('');
+}
+renderGames();
+
+// ==========================================
+// ۳. سیستم لینک مستقیم (Deep Link از ربات)
+// ==========================================
+const urlParams = new URLSearchParams(window.location.search);
+const gameParam = urlParams.get('game');
+if (gameParam && gamesList.some(g => g.id === gameParam)) {
+    setTimeout(() => openGame(gameParam), 800); // تاخیر برای نمایش انیمیشن
+}
+
+// ==========================================
+// ۴. مدیریت مودال و بازی‌ها
+// ==========================================
+let currentGameLoop = null;
+
+function openGame(id) {
+    const modal = document.getElementById('game-modal');
+    const title = document.getElementById('game-title');
+    const content = document.getElementById('game-content');
+    const highEl = document.getElementById('game-high');
+    const scoreEl = document.getElementById('game-score');
+
+    modal.style.display = 'flex';
+    content.innerHTML = '';
+    scoreEl.innerText = '0';
+    if(currentGameLoop) clearInterval(currentGameLoop);
+
+    if (id === 'math') {
+        title.innerText = 'چالش ریاضی';
+        highEl.innerText = db.data.stats.math;
+        content.innerHTML = `
+            <h1 id="math-question" style="font-family:'Orbitron'; font-size: 42px; margin: 20px 0; color: var(--primary); text-shadow: 0 0 15px rgba(0,243,255,0.5);">? + ?</h1>
+            <input type="number" id="math-input" class="input-field" placeholder="پاسخ؟" autocomplete="off">
+            <button class="btn" onclick="checkMath()">تایید</button>
+        `;
+        startMath();
+    } 
+    else if (id === 'reaction') {
+        title.innerText = 'زمان واکنش';
+        highEl.innerText = db.data.stats.reaction === 9999 ? '---' : db.data.stats.reaction + 'ms';
+        content.innerHTML = `<div id="reaction-box" style="background:var(--secondary);">منتظر بمان...</div>`;
+        startReaction(highEl, scoreEl);
+    }
+    else if (id === 'memory') {
+        title.innerText = 'حافظه تصویری';
+        highEl.innerText = db.data.stats.memory;
+        startMemory(scoreEl);
+    }
+    else if (id === 'target') {
+        title.innerText = 'هدف‌زنی';
+        highEl.innerText = db.data.stats.target;
+        startTarget(scoreEl);
+    }
+    else if (id === 'typing') {
+        title.innerText = 'سرعت تایپ';
+        highEl.innerText = db.data.stats.typing;
+        startTyping(scoreEl);
+    }
+}
+
+function closeGame() {
+    document.getElementById('game-modal').style.display = 'none';
+    if(currentGameLoop) clearInterval(currentGameLoop);
+    if(window.stopTargetGame) window.stopTargetGame();
+    if(window.stopReactionGame) window.stopReactionGame();
+}
+
+// --- ۱. بازی ریاضی ---
+let mathAnswer = 0, currentMathScore = 0;
+function startMath() {
+    const a = Math.floor(Math.random() * 20) + 1;
+    const b = Math.floor(Math.random() * 20) + 1;
+    const op = Math.random() > 0.5 ? '+' : '-';
+    mathAnswer = op === '+' ? a + b : a - b;
+    document.getElementById('math-question').innerText = `${a} ${op} ${b} = ?`;
+}
+window.checkMath = function() {
+    const input = document.getElementById('math-input');
+    const val = parseInt(input.value);
+    if (val === mathAnswer) {
+        currentMathScore += 10;
+        document.getElementById('game-score').innerText = currentMathScore;
+        db.addScore(10);
+        input.value = '';
+        if (currentMathScore > db.data.stats.math) {
+            db.data.stats.math = currentMathScore;
+            document.getElementById('game-high').innerText = currentMathScore;
+            db.save();
+        }
+        startMath();
+    } else {
+        input.style.borderColor = 'var(--secondary)';
+        setTimeout(() => input.style.borderColor = 'var(--border)', 500);
+        input.value = '';
+    }
+};
+
+// --- ۲. زمان واکنش ---
+function startReaction(highEl, scoreEl) {
+    const box = document.getElementById('reaction-box');
+    let start = 0;
+    let timeout = setTimeout(() => {
+        box.style.background = 'var(--success)';
+        box.innerText = 'کلیک کن!';
+        start = Date.now();
+    }, Math.random() * 3000 + 2000);
+    
+    box.onclick = () => {
+        if (start === 0) {
+            box.innerText = 'خیلی زود زدی!';
+            box.style.background = 'var(--secondary)';
+            clearTimeout(timeout);
+        } else {
+            const t = Date.now() - start;
+            box.innerText = `${t} میلی‌ثانیه`;
+            box.style.background = 'var(--primary)';
+            box.onclick = null;
+            const pts = Math.max(1, Math.floor(1000 / t) * 5);
+            scoreEl.innerText = pts;
+            db.addScore(pts);
+            if (t < db.data.stats.reaction) {
+                db.data.stats.reaction = t;
+                highEl.innerText = t + 'ms';
+                db.save();
+                showToast('رکورد جدید ثبت شد!');
+            }
+            setTimeout(closeGame, 2000);
+        }
+    };
+    window.stopReactionGame = () => clearTimeout(timeout);
+}
+
+// --- ۳. حافظه تصویری ---
+function startMemory(scoreEl) {
+    const emojis = ['🍎','🍌','🍇','🍉','🍓','🍒'];
+    const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+    let opened = [], matched = 0, score = 0;
+    
+    let html = '<div class="memory-grid">';
+    cards.forEach((c, i) => { html += `<div id="mem-${i}" class="memory-card" onclick="flipMem(${i},'${c}')"></div>`; });
+    html += '</div>';
+    document.getElementById('game-content').innerHTML = html;
+    
+    window.flipMem = (i, c) => {
+        const el = document.getElementById(`mem-${i}`);
+        if(el.innerText !== '' || opened.length === 2) return; 
+        el.innerText = c;
+        el.style.background = 'rgba(0, 243, 255, 0.2)';
+        opened.push({i, c});
+        
+        if(opened.length === 2) {
+            if(opened[0].c === opened[1].c) { 
+                matched++; score += 20;
+                scoreEl.innerText = score;
+                db.addScore(20);
+                opened = []; 
+                if(matched === 6) { 
+                    if (score > db.data.stats.memory) { db.data.stats.memory = score; db.save(); showToast('رکورد جدید!'); }
+                    setTimeout(closeGame, 1500); 
+                } 
+            }
+            else { 
+                setTimeout(() => { 
+                    document.getElementById(`mem-${opened[0].i}`).innerText=''; 
+                    document.getElementById(`mem-${opened[0].i}`).style.background = 'rgba(0,0,0,0.6)';
+                    document.getElementById(`mem-${opened[1].i}`).innerText=''; 
+                    document.getElementById(`mem-${opened[1].i}`).style.background = 'rgba(0,0,0,0.6)';
+                    opened = []; 
+                }, 800); 
+            }
+        }
+    };
+}
+
+// --- ۴. هدف‌زنی ---
+function startTarget(scoreEl) {
+    let score = 0, time = 15;
+    document.getElementById('game-content').innerHTML = `
+        <div style="color:var(--secondary); font-weight:bold; margin-bottom:10px; font-size:18px;">زمان: <span id="t-time">15</span></div>
+        <div id="target-area"></div>
+    `;
+    const area = document.getElementById('target-area');
+    const spawn = () => {
+        if(time <= 0) return;
+        const t = document.createElement('div');
+        t.innerText = '🎯'; t.className = 'target';
+        t.style.left = Math.random() * 80 + '%'; t.style.top = Math.random() * 80 + '%';
+        t.onclick = (e) => { 
+            e.stopPropagation(); t.remove(); score += 10; scoreEl.innerText = score; db.addScore(10); spawn(); 
+        };
+        area.appendChild(t);
+        setTimeout(() => { if(t.parentNode) t.remove(); }, 800);
+    };
+    spawn();
+    currentGameLoop = setInterval(() => { 
+        time--; document.getElementById('t-time').innerText = time; 
+        if(time <= 0) { 
+            clearInterval(currentGameLoop); 
+            if (score > db.data.stats.target) { db.data.stats.target = score; db.save(); showToast('رکورد جدید!'); }
+            closeGame(); 
+        } 
+    }, 1000);
+    window.stopTargetGame = () => clearInterval(currentGameLoop);
+}
+
+// --- ۵. سرعت تایپ ---
+const words = ['برنامه', 'کامپیوتر', 'اینترنت', 'بازی', 'موبایل', 'ایران', 'امنیت', 'سرعت', 'دیتابیس'];
+function startTyping(scoreEl) {
+    let score = 0, time = 30;
+    const targetWord = words[Math.floor(Math.random() * words.length)];
+    document.getElementById('game-content').innerHTML = `
+        <div style="color:var(--secondary); font-weight:bold; margin-bottom:10px;">زمان: <span id="t-time">30</span></div>
+        <h1 style="font-size:28px; margin-bottom:20px; letter-spacing:2px;">${targetWord}</h1>
+        <input type="text" id="type-input" class="input-field" placeholder="اینجا تایپ کن..." autocomplete="off">
+        <button class="btn" onclick="checkType('${targetWord}')">ثبت</button>
+    `;
+    document.getElementById('type-input').focus();
+    
+    currentGameLoop = setInterval(() => { 
+        time--; document.getElementById('t-time').innerText = time; 
+        if(time <= 0) { 
+            clearInterval(currentGameLoop); 
+            if (score > db.data.stats.typing) { db.data.stats.typing = score; db.save(); showToast('رکورد جدید!'); }
+            closeGame(); 
+        } 
+    }, 1000);
+
+    window.checkType = (word) => {
+        const val = document.getElementById('type-input').value;
+        if (val === word) {
+            score += 50; scoreEl.innerText = score; db.addScore(50);
+            document.getElementById('type-input').value = '';
+            startTyping(scoreEl); // کلمه جدید
+            clearInterval(currentGameLoop); // تایمر ریست میشه
+        } else {
+            document.getElementById('type-input').style.borderColor = 'var(--secondary)';
+            setTimeout(() => document.getElementById('type-input').style.borderColor = 'var(--border)', 500);
+        }
+    };
+}
+</script>
+</body>
+</html>
