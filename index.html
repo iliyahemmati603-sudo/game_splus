@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Galactic Arcade</title>
+<title>Galactic Empire | پلتفرم بازی</title>
 <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -16,31 +16,51 @@
         <div class="avatar" id="ui-avatar">G</div>
         <div class="user-details">
             <h2 id="ui-name">کاوشگر</h2>
-            <p id="ui-tag">Galactic Pro</p>
+            <p id="ui-tag">Galactic Empire</p>
         </div>
     </div>
-    <div class="wallet">
+    <div class="wallet" onclick="UIManager.switchTab('about', document.querySelectorAll('.nav-btn')[4])">
         <span>💎</span><span id="ui-coins">0</span>
     </div>
 </header>
 
 <main class="main-content">
+    
     <section id="tab-home" class="tab-pane active">
-        <div class="hero-section">
-            <h1 class="hero-title">به Galactic Arcade خوش آمدید</h1>
-            <p class="hero-desc">بیش از ۱۲ بازی حرفه‌ای، رقابت با بازیکنان دیگر، و کسب سکه‌های ارزشمند در انتظار شماست.</p>
-        </div>
-        <div class="section-title">پیشنهاد ویژه</div>
-        <div class="game-grid">
-            <div class="game-card featured" onclick="GameManager.open('lumberjack')">
-                <div class="game-icon">🪓</div>
-                <div class="game-title">چوب‌بر</div>
-                <div class="game-desc">با سرعت درخت‌ها را قطع کن</div>
+        <div class="hero-banner">
+            <div class="hero-content">
+                <h1 class="hero-title">امپراتوری کهکشانی</h1>
+                <p class="hero-desc">به دنیای بازی‌های مهارتی، استراتژیک و گروهی خوش آمدید. در اینجا می‌توانید در برابر دیگران رقابت کنید، به اتحادیه‌ها بپیوندید و امپراتوری خود را بسازید.</p>
+                <button class="btn btn-primary" onclick="UIManager.switchTab('games', document.querySelectorAll('.nav-btn')[1])">شروع بازی</button>
             </div>
-            <div class="game-card featured" onclick="GameManager.open('rocket')">
+            <div class="hero-graphic">🌌</div>
+        </div>
+
+        <div class="section-title">ساخته شده توسط:</div>
+        <div class="credits-grid">
+            <div class="credit-card">
+                <div class="credit-icon">👨‍💻</div>
+                <div class="credit-name">@none313</div>
+                <div class="credit-role">سازنده و توسعه‌دهنده</div>
+            </div>
+            <div class="credit-card">
+                <div class="credit-icon">🛡️</div>
+                <div class="credit-name">@fiioz</div>
+                <div class="credit-role">مدیر ربات و سایت</div>
+            </div>
+        </div>
+
+        <div class="section-title">بازی‌های محبوب</div>
+        <div class="game-grid">
+            <div class="game-card" onclick="GameManager.open('runner')">
                 <div class="game-icon">🚀</div>
-                <div class="game-title">سفر موشک</div>
-                <div class="game-desc">از سیارک‌ها فرار کن</div>
+                <div class="game-title">فرار کهکشانی</div>
+                <div class="game-desc">مهارت و سرعت عمل</div>
+            </div>
+            <div class="game-card" onclick="GameManager.open('minesweeper')">
+                <div class="game-icon">💣</div>
+                <div class="game-title">مین‌یاب</div>
+                <div class="game-desc">ریسک و استراتژی</div>
             </div>
         </div>
     </section>
@@ -50,9 +70,68 @@
         <div class="game-grid" id="games-list"></div>
     </section>
 
-    <section id="tab-leaderboard" class="tab-pane">
-        <div class="section-title">برترین‌های جهان</div>
-        <div id="leaderboard-list"></div>
+    <section id="tab-clan" class="tab-pane">
+        <div class="section-title">اتحادیه و گروه</div>
+        
+        <div id="clan-lobby">
+            <div class="info-card">
+                <h3>اتحادیه خود را بسازید یا به یکی بپیوندید</h3>
+                <p>با ساخت اتحادیه می‌توانید با دوستان خود چت کنید، به باس‌های گروهی حمله کنید و جوایز ارزشمندی کسب کنید.</p>
+            </div>
+            <input type="text" id="clan-input" class="input-box" placeholder="نام اتحادیه...">
+            <button class="btn btn-gold" onclick="ClanManager.create()">ایجاد اتحادیه (5000 💎)</button>
+            <button class="btn btn-outline" onclick="ClanManager.join()">جستجو و پیوستن به اتحادیه</button>
+        </div>
+
+        <div id="clan-room" style="display:none;">
+            <div class="clan-header">
+                <div class="clan-info">
+                    <h3 id="c-name">نام اتحادیه</h3>
+                    <p>رهبر: <span id="c-leader">-</span> | اعضا: <span id="c-members">0</span></p>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="ClanManager.leave()">خروج</button>
+            </div>
+            
+            <div class="boss-section">
+                <div class="boss-header">
+                    <span>👾 باس اتحادیه</span>
+                    <span id="boss-hp-text">1000 / 1000</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="boss-health-bar" style="width:100%;"></div></div>
+                <div class="boss-actions">
+                    <button class="btn btn-danger" onclick="ClanManager.attackBoss()">حمله (10 💎)</button>
+                    <button class="btn btn-gold" onclick="ClanManager.donate()">کمک به خزانه (100)</button>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <span>چت گروهی</span>
+                    <span class="chat-status">● آنلاین</span>
+                </div>
+                <div class="chat-messages" id="clan-chat"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="clan-chat-input" class="chat-input" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key==='Enter')ClanManager.sendMsg()">
+                    <button class="chat-send" onclick="ClanManager.sendMsg()">ارسال</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-about" class="tab-pane">
+        <div class="section-title">درباره ما</div>
+        <div class="about-card">
+            <h2>به Galactic Empire خوش آمدید</h2>
+            <p>ما یک تیم مستقل هستیم که با هدف ایجاد یک پلتفرم سرگرمی با کیفیت و متفاوت در سروش پلاس، این پروژه را آغاز کردیم. تمرکز ما بر روی بازی‌های مهارتی، استراتژیک و ایجاد ارتباط بین کاربران از طریق اتحادیه‌ها است.</p>
+            <p>تمام بازی‌ها با موتورهای گرافیکی مدرن و الگوریتم‌های هوش مصنوعی طراحی شده‌اند تا تجربه‌ای بی‌نظیر و رقابتی را برای شما فراهم کنند.</p>
+            
+            <h3>تیم توسعه</h3>
+            <ul class="team-list">
+                <li><strong>سازنده و برنامه‌نویس ارشد:</strong> <a href="https://splus.ir/none313" target="_blank">@none313</a></li>
+                <li><strong>مدیریت ربات و پلتفرم:</strong> <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a></li>
+            </ul>
+            <p class="version-text">نسخه نهایی (1.0.0) - تمامی حقوق محفوظ است.</p>
+        </div>
     </section>
 
     <section id="tab-profile" class="tab-pane">
@@ -61,15 +140,16 @@
             <div class="profile-header">
                 <div class="avatar large" id="prof-avatar">G</div>
                 <h3 id="prof-name">کاربر</h3>
+                <p class="prof-clan" id="prof-clan-name">بدون اتحادیه</p>
             </div>
             <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="prof-coins">0</div>
-                    <div class="stat-label">سکه</div>
+                <div class="stat-box">
+                    <div class="stat-val" id="prof-coins">0</div>
+                    <div class="stat-lbl">سکه</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="prof-games">0</div>
-                    <div class="stat-label">بازی</div>
+                <div class="stat-box">
+                    <div class="stat-val" id="prof-games">0</div>
+                    <div class="stat-lbl">بازی</div>
                 </div>
             </div>
         </div>
@@ -77,18 +157,11 @@
 </main>
 
 <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="UIManager.switchTab('home', this)">
-        <span class="nav-icon">🏠</span><span>خانه</span>
-    </button>
-    <button class="nav-btn" onclick="UIManager.switchTab('games', this)">
-        <span class="nav-icon">🎮</span><span>بازی‌ها</span>
-    </button>
-    <button class="nav-btn" onclick="UIManager.switchTab('leaderboard', this)">
-        <span class="nav-icon">🏆</span><span>رتبه</span>
-    </button>
-    <button class="nav-btn" onclick="UIManager.switchTab('profile', this)">
-        <span class="nav-icon">👤</span><span>پروفایل</span>
-    </button>
+    <button class="nav-btn active" onclick="UIManager.switchTab('home', this)"><span class="nav-icon">🏠</span><span>خانه</span></button>
+    <button class="nav-btn" onclick="UIManager.switchTab('games', this)"><span class="nav-icon">🎮</span><span>بازی‌ها</span></button>
+    <button class="nav-btn" onclick="UIManager.switchTab('clan', this)"><span class="nav-icon">🛡️</span><span>اتحادیه</span></button>
+    <button class="nav-btn" onclick="UIManager.switchTab('profile', this)"><span class="nav-icon">👤</span><span>پروفایل</span></button>
+    <button class="nav-btn" onclick="UIManager.switchTab('about', this)"><span class="nav-icon">ℹ️</span><span>درباره</span></button>
 </nav>
 
 <div class="modal-overlay" id="game-modal">
