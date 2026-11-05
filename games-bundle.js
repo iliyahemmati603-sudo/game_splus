@@ -1273,3 +1273,1329 @@ window.Game_tetris = class extends GameBase {
         if (this._up) this.canvas.removeEventListener('pointerup', this._up);
     }
 };
+window.Game_blocks = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        const topOff = 60;
+        const trayH = 150;
+        const availH = this.h - trayH - topOff - 20;
+        const availW = this.w - 40;
+        
+        this.cellSize = Math.floor(Math.min(availW / 8, availH / 8));
+        this.gridW = 8 * this.cellSize;
+        this.gridH = 8 * this.cellSize;
+        this.gridX = (this.w - this.gridW) / 2;
+        this.gridY = topOff + (availH - this.gridH) / 2;
+        this.trayY = this.gridY + this.gridH + 30;
+        this.trayH = trayH;
+        
+        if (this.pieces) {
+            this.layoutTray();
+        }
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.pickup(e.clientX - r.left, e.clientY - r.top);
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._move = (e) => {
+            if (!this.dragging) {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.dragging.x = e.clientX - r.left - this.dragging.w / 2;
+            this.dragging.y = e.clientY - r.top - this.dragging.h / 2;
+            this.updatePreview();
+        };
+        this.canvas.addEventListener('pointermove', this._move);
+
+        this._up = () => {
+            if (this.dragging) {
+                this.drop();
+            }
+        };
+        window.addEventListener('pointerup', this._up);
+        window.addEventListener('pointercancel', this._up);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.grid = Array.from({ length: 8 }, () => Array(8).fill(0));
+        this.score = 0;
+        this.combo = 0;
+        this.linesCleared = 0;
+        this.dragging = null;
+        this.preview = null;
+        this.floatingTexts = [];
+        this.shakeTimer = 0;
+        this.generatePieces();
+        this.updateHud();
+    }
+
+    updateHud() {
+        const ct = this.combo > 1 ? ` · کمبو ×${this.combo}` : '';
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">خط ${this.linesCleared}${ct}</div>
+        `);
+    }
+
+    generatePieces() {
+        const shapes = [
+            [[1]],
+            [[1,1]],
+            [[1],[1]],
+            [[1,1,1]],
+            [[1],[1],[1]],
+            [[1,1],[1,1]],
+            [[1,1,1],[1,1,1],[1,1,1]],
+            [[1,0],[1,0],[1,1]],
+            [[0,1],[0,1],[1,1]],
+            [[1,1],[1,0]],
+            [[1,1],[0,1]],
+            [[1,0],[1,1]],
+            [[0,1],[1,1]],
+            [[1,0,0],[1,1,1]],
+            [[0,0,1],[1,1,1]],
+            [[0,1,0],[1,1,1]],
+            [[1,0],[1,1],[0,1]],
+            [[0,1],[1,1],[1,0]],
+            [[1,1,1,1]],
+            [[1],[1],[1],[1]]
+        ];
+        const colors = ['#00e5ff', '#ff2d78', '#ffc531', '#a855f7', '#2bff88', '#ff7a00'];
+        
+        this.pieces = [];
+        for (let i = 0; i < 3; i++) {
+            const s = shapes[Math.floor(Math.random() * shapes.length)];
+            this.pieces.push({
+                shape: s.map(r => r.slice()),
+                color: colors[Math.floor(Math.random() * colors.length)],
+                used: false
+            });
+        }
+        this.layoutTray();
+    }
+
+    layoutTray() {
+        const trayW = this.w - 40;
+        const pieceW = trayW / 3;
+        
+        for (let i = 0; i < 3; i++) {
+            const p = this.pieces[i];
+            if (!p) {
+                continue;
+            }
+            const rows = p.shape.length;
+            const cols = p.shape[0].length;
+            const maxDim = Math.max(rows, cols);
+            const cell = Math.min(34, (pieceW - 30) / maxDim);
+            
+            p.baseCell = cell;
+            p.baseW = cols * cell;
+            p.baseH = rows * cell;
+            p.trayX = 20 + i * pieceW + (pieceW - p.baseW) / 2;
+            p.trayY = this.trayY + (this.trayH - p.baseH) / 2;
+        }
+    }
+
+    pickup(x, y) {
+        if (this.state !== 'playing') {
+            return;
+        }
+        
+        for (let i = 0; i < 3; i++) {
+            const p = this.pieces[i];
+            if (!p || p.used) {
+                continue;
+            }
+            
+            const pad = 20;
+            if (x >= p.trayX - pad && x <= p.trayX + p.baseW + pad && y >= p.trayY - pad && y <= p.trayY + p.baseH + pad) {
+                const cell = this.cellSize;
+                const w = p.shape[0].length * cell;
+                const h = p.shape.length * cell;
+                
+                this.dragging = {
+                    index: i,
+                    shape: p.shape,
+                    color: p.color,
+                    cell: cell,
+                    w: w,
+                    h: h,
+                    x: x - w / 2,
+                    y: y - h / 2
+                };
+                
+                AudioEngine.tone(500, 0.05, 'sine', 0.1);
+                Haptics.light();
+                return;
+            }
+        }
+    }
+
+    updatePreview() {
+        if (!this.dragging) {
+            this.preview = null;
+            return;
+        }
+        
+        const d = this.dragging;
+        const gc = Math.round((d.x - this.gridX) / this.cellSize);
+        const gr = Math.round((d.y - this.gridY) / this.cellSize);
+        
+        if (gc < 0 || gr < 0 || gc + d.shape[0].length > 8 || gr + d.shape.length > 8) {
+            this.preview = null;
+            return;
+        }
+
+        for (let r = 0; r < d.shape.length; r++) {
+            for (let c = 0; c < d.shape[r].length; c++) {
+                if (d.shape[r][c] && this.grid[gr + r][gc + c]) {
+                    this.preview = null;
+                    return;
+                }
+            }
+        }
+        
+        this.preview = {
+            row: gr,
+            col: gc,
+            shape: d.shape,
+            color: d.color
+        };
+    }
+
+    drop() {
+        if (!this.dragging) {
+            this.preview = null;
+            return;
+        }
+        
+        const d = this.dragging;
+
+        if (this.preview) {
+            for (let r = 0; r < d.shape.length; r++) {
+                for (let c = 0; c < d.shape[r].length; c++) {
+                    if (d.shape[r][c]) {
+                        this.grid[this.preview.row + r][this.preview.col + c] = d.color;
+                    }
+                }
+            }
+            
+            this.score += 10;
+            this.pieces[d.index].used = true;
+            
+            AudioEngine.tone(700, 0.08, 'sine', 0.12);
+            Haptics.medium();
+            
+            for (let r = 0; r < d.shape.length; r++) {
+                for (let c = 0; c < d.shape[r].length; c++) {
+                    if (d.shape[r][c]) {
+                        const px = this.gridX + (this.preview.col + c) * this.cellSize + this.cellSize / 2;
+                        const py = this.gridY + (this.preview.row + r) * this.cellSize + this.cellSize / 2;
+                        Particles.burst(px, py, 4, {
+                            color: d.color,
+                            minSpeed: 40,
+                            maxSpeed: 120,
+                            gravity: 300
+                        });
+                    }
+                }
+            }
+
+            this.checkClears();
+            
+            if (this.pieces.every(p => p.used)) {
+                this.generatePieces();
+            }
+            
+            if (this.isGameOver()) {
+                this.gameOver();
+            }
+        } else {
+            AudioEngine.tone(200, 0.1, 'sawtooth', 0.08);
+            Haptics.light();
+        }
+        
+        this.dragging = null;
+        this.preview = null;
+        this.updateHud();
+    }
+
+    checkClears() {
+        const rows = [];
+        const cols = [];
+        
+        for (let r = 0; r < 8; r++) {
+            if (this.grid[r].every(c => c)) {
+                rows.push(r);
+            }
+        }
+        
+        for (let c = 0; c < 8; c++) {
+            let full = true;
+            for (let r = 0; r < 8; r++) {
+                if (!this.grid[r][c]) {
+                    full = false;
+                    break;
+                }
+            }
+            if (full) {
+                cols.push(c);
+            }
+        }
+
+        const total = rows.length + cols.length;
+        
+        if (total > 0) {
+            this.combo++;
+            const pts = total * 150 * this.combo;
+            this.score += pts;
+            this.linesCleared += total;
+            
+            AudioEngine.win();
+            Haptics.success();
+            Camera.add(0.5);
+            this.shakeTimer = 0.3;
+
+            for (const r of rows) {
+                for (let c = 0; c < 8; c++) {
+                    const x = this.gridX + c * this.cellSize + this.cellSize / 2;
+                    const y = this.gridY + r * this.cellSize + this.cellSize / 2;
+                    Particles.burst(x, y, 10, {
+                        color: this.grid[r][c],
+                        minSpeed: 100,
+                        maxSpeed: 300,
+                        gravity: 400
+                    });
+                }
+            }
+            
+            for (const c of cols) {
+                for (let r = 0; r < 8; r++) {
+                    const x = this.gridX + c * this.cellSize + this.cellSize / 2;
+                    const y = this.gridY + r * this.cellSize + this.cellSize / 2;
+                    Particles.burst(x, y, 10, {
+                        color: this.grid[r][c],
+                        minSpeed: 100,
+                        maxSpeed: 300,
+                        gravity: 400
+                    });
+                }
+            }
+
+            for (const r of rows) {
+                for (let c = 0; c < 8; c++) {
+                    this.grid[r][c] = 0;
+                }
+            }
+            
+            for (const c of cols) {
+                for (let r = 0; r < 8; r++) {
+                    this.grid[r][c] = 0;
+                }
+            }
+
+            this.floatingTexts.push({
+                x: this.gridX + this.gridW / 2,
+                y: this.gridY + this.gridH / 2,
+                text: '+' + pts,
+                sub: this.combo > 1 ? 'کمبو ×' + this.combo : '',
+                life: 1.8,
+                max: 1.8
+            });
+        } else {
+            this.combo = 0;
+        }
+    }
+
+    isGameOver() {
+        for (const p of this.pieces) {
+            if (p.used) {
+                continue;
+            }
+            if (this.canPlace(p.shape)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    canPlace(shape) {
+        const rows = shape.length;
+        const cols = shape[0].length;
+        
+        for (let r = 0; r <= 8 - rows; r++) {
+            for (let c = 0; c <= 8 - cols; c++) {
+                let fits = true;
+                for (let dr = 0; dr < rows; dr++) {
+                    for (let dc = 0; dc < cols; dc++) {
+                        if (shape[dr][dc] && this.grid[r + dr][c + dc]) {
+                            fits = false;
+                            break;
+                        }
+                    }
+                    if (!fits) {
+                        break;
+                    }
+                }
+                if (fits) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    gameOver() {
+        this.state = 'dead';
+        AudioEngine.lose();
+        Haptics.heavy();
+        Camera.add(1);
+        setTimeout(() => {
+            App.gameOver('blocks', this.score, { lines: this.linesCleared });
+        }, 600);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        
+        if (this.shakeTimer > 0) {
+            this.shakeTimer -= dt;
+        }
+        
+        for (const ft of this.floatingTexts) {
+            ft.life -= dt;
+            ft.y -= dt * 60;
+        }
+        this.floatingTexts = this.floatingTexts.filter(f => f.life > 0);
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 38px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('BLOCK PUZZLE', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        const pulse = this.shakeTimer > 0 ? 1 + Math.sin(this.shakeTimer * 50) * 0.03 : 1;
+        ctx.save();
+        ctx.translate(this.gridX + this.gridW / 2, this.gridY + this.gridH / 2);
+        ctx.scale(pulse, pulse);
+        ctx.translate(-this.gridX - this.gridW / 2, -this.gridY - this.gridH / 2);
+
+        ctx.fillStyle = 'rgba(0,229,255,0.04)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(this.gridX - 8, this.gridY - 8, this.gridW + 16, this.gridH + 16, 16);
+        } else {
+            ctx.rect(this.gridX - 8, this.gridY - 8, this.gridW + 16, this.gridH + 16);
+        }
+        ctx.fill();
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const x = this.gridX + c * this.cellSize;
+                const y = this.gridY + r * this.cellSize;
+                
+                ctx.strokeStyle = 'rgba(0,229,255,0.08)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 0.5, y + 0.5, this.cellSize - 1, this.cellSize - 1);
+                
+                if (this.grid[r][c]) {
+                    this.drawBlock(ctx, x + 2, y + 2, this.cellSize - 4, this.grid[r][c]);
+                }
+            }
+        }
+        ctx.restore();
+
+        if (this.preview) {
+            for (let r = 0; r < this.preview.shape.length; r++) {
+                for (let c = 0; c < this.preview.shape[r].length; c++) {
+                    if (this.preview.shape[r][c]) {
+                        const x = this.gridX + (this.preview.col + c) * this.cellSize;
+                        const y = this.gridY + (this.preview.row + r) * this.cellSize;
+                        ctx.globalAlpha = 0.5;
+                        this.drawBlock(ctx, x + 2, y + 2, this.cellSize - 4, this.preview.color);
+                        ctx.globalAlpha = 1;
+                    }
+                }
+            }
+        }
+
+        for (const p of this.pieces) {
+            if (!p || p.used) {
+                continue;
+            }
+            for (let r = 0; r < p.shape.length; r++) {
+                for (let c = 0; c < p.shape[r].length; c++) {
+                    if (p.shape[r][c]) {
+                        const x = p.trayX + c * p.baseCell;
+                        const y = p.trayY + r * p.baseCell;
+                        this.drawBlock(ctx, x + 1, y + 1, p.baseCell - 2, p.color);
+                    }
+                }
+            }
+        }
+
+        if (this.dragging) {
+            const d = this.dragging;
+            for (let r = 0; r < d.shape.length; r++) {
+                for (let c = 0; c < d.shape[r].length; c++) {
+                    if (d.shape[r][c]) {
+                        const x = d.x + c * d.cell;
+                        const y = d.y + r * d.cell;
+                        this.drawBlock(ctx, x + 1, y + 1, d.cell - 2, d.color, 1.3);
+                    }
+                }
+            }
+        }
+
+        Particles.render(ctx);
+
+        for (const ft of this.floatingTexts) {
+            ctx.globalAlpha = Math.min(1, ft.life / ft.max * 1.5);
+            ctx.fillStyle = '#ffc531';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 25;
+            ctx.fillText(ft.text, ft.x, ft.y);
+            if (ft.sub) {
+                ctx.font = 'bold 20px Tahoma';
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillText(ft.sub, ft.x, ft.y + 35);
+            }
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
+
+        Camera.reset(ctx);
+    }
+
+    drawBlock(ctx, x, y, size, color, scale) {
+        const s = scale || 1;
+        const g = ctx.createLinearGradient(x, y, x + size, y + size);
+        g.addColorStop(0, this.lighten(color, 40 * s));
+        g.addColorStop(1, this.darken(color, 50 * s));
+        
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(x, y, size, size, Math.max(4, size * 0.15));
+        } else {
+            ctx.rect(x, y, size, size);
+        }
+        ctx.fill();
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(x + size * 0.15, y + size * 0.1, size * 0.7, size * 0.15);
+    }
+
+    lighten(hex, amt) {
+        const h = hex.replace('#', '');
+        return '#' + [0, 2, 4].map(i => Math.min(255, parseInt(h.substr(i, 2), 16) + amt).toString(16).padStart(2, '0')).join('');
+    }
+
+    darken(hex, amt) {
+        const h = hex.replace('#', '');
+        return '#' + [0, 2, 4].map(i => Math.max(0, parseInt(h.substr(i, 2), 16) - amt).toString(16).padStart(2, '0')).join('');
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) this.canvas.removeEventListener('pointerdown', this._touch);
+        if (this._move) this.canvas.removeEventListener('pointermove', this._move);
+        if (this._up) {
+            window.removeEventListener('pointerup', this._up);
+            window.removeEventListener('pointercancel', this._up);
+        }
+    }
+};
+
+window.Game_flappy = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.groundY = this.h - 80;
+        this.birdX = this.w * 0.28;
+        this.birdR = 18 * clamp(Math.min(this.w, this.h) / 500, 0.7, 1.4);
+        this.pipeW = Math.max(65, this.w * 0.18);
+        this.gapH = Math.max(160, this.h * 0.30);
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+            } else if (this.state === 'playing') {
+                this.flap();
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._key = (e) => {
+            if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') {
+                e.preventDefault();
+                if (this.state === 'menu' || this.state === 'dead') {
+                    this.startGame();
+                } else if (this.state === 'playing') {
+                    this.flap();
+                }
+            }
+        };
+        window.addEventListener('keydown', this._key);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.bird = {
+            y: this.h / 2,
+            vy: 0,
+            rot: 0,
+            wing: 0
+        };
+        this.pipes = [];
+        this.score = 0;
+        this.spawnT = 0;
+        this.spawnI = 1.6;
+        this.gravity = 1700;
+        this.flapV = -520;
+        this.time = 0;
+        
+        this.stars = [];
+        for (let i = 0; i < 100; i++) {
+            this.stars.push({
+                x: Math.random() * this.w,
+                y: Math.random() * this.groundY,
+                s: Math.random() * 2 + 0.5,
+                p: Math.random() * 6.28
+            });
+        }
+        
+        this.clouds = [];
+        for (let i = 0; i < 8; i++) {
+            this.clouds.push({
+                x: Math.random() * this.w,
+                y: rand(50, this.groundY - 300),
+                w: rand(120, 250),
+                speed: rand(15, 40)
+            });
+        }
+
+        this.mountains = [];
+        for (let i = 0; i < 6; i++) {
+            this.mountains.push({
+                x: i * (this.w / 1.5),
+                w: rand(200, 350),
+                h: rand(150, 350)
+            });
+        }
+
+        this.updateHud();
+    }
+
+    flap() {
+        if (this.state !== 'playing') {
+            return;
+        }
+        this.bird.vy = this.flapV;
+        this.bird.wing = 1;
+        
+        AudioEngine.tone(550, 0.08, 'sine', 0.1, 750);
+        Haptics.light();
+        
+        Particles.burst(this.birdX - this.birdR, this.bird.y + this.birdR * 0.5, 8, {
+            color: '#00e5ff',
+            minSpeed: 50,
+            maxSpeed: 150,
+            angle: Math.PI,
+            gravity: 150
+        });
+    }
+
+    spawnPipe() {
+        const margin = 70;
+        const gapY = rand(this.gapH / 2 + margin, this.groundY - this.gapH / 2 - margin);
+        const colors = ['#00e5ff', '#2bff88', '#a855f7'];
+        
+        this.pipes.push({
+            x: this.w + 40,
+            gapY: gapY,
+            scored: false,
+            color: colors[Math.floor(Math.random() * colors.length)]
+        });
+    }
+
+    updateHud() {
+        this.setHud(`<div class="hud-pill">امتیاز <b>${this.score}</b></div>`);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        this.time += dt;
+
+        for (const s of this.stars) {
+            s.x -= dt * 15;
+            if (s.x < 0) {
+                s.x = this.w;
+            }
+        }
+        
+        for (const c of this.clouds) {
+            c.x -= c.speed * dt * 4;
+            if (c.x + c.w < 0) {
+                c.x = this.w + 100;
+            }
+        }
+        
+        for (const m of this.mountains) {
+            m.x -= dt * 50;
+            if (m.x + m.w < 0) {
+                m.x = this.w + 100;
+            }
+        }
+
+        this.bird.wing = Math.max(0, this.bird.wing - dt * 6);
+
+        if (this.state === 'menu') {
+            this.bird.y = this.h / 2 + Math.sin(this.time * 3) * 12;
+            this.bird.rot = Math.sin(this.time * 3) * 0.1;
+            return;
+        }
+
+        if (this.state === 'dead') {
+            this.bird.vy += this.gravity * dt;
+            this.bird.y += this.bird.vy * dt;
+            if (this.bird.y > this.groundY - this.birdR) {
+                this.bird.y = this.groundY - this.birdR;
+            }
+            return;
+        }
+
+        this.bird.vy += this.gravity * dt;
+        this.bird.y += this.bird.vy * dt;
+        this.bird.rot = clamp(this.bird.vy / 700, -0.8, 1.6);
+
+        if (this.bird.y - this.birdR < 70) {
+            this.bird.y = this.birdR + 70;
+            this.bird.vy = 0;
+        }
+        
+        if (this.bird.y + this.birdR > this.groundY) {
+            return this.die();
+        }
+
+        this.spawnT += dt;
+        if (this.spawnT >= this.spawnI) {
+            this.spawnT = 0;
+            this.spawnPipe();
+        }
+
+        for (const p of this.pipes) {
+            p.x -= 240 * dt;
+            
+            if (!p.scored && p.x + this.pipeW < this.birdX - this.birdR) {
+                p.scored = true;
+                this.score++;
+                AudioEngine.coin();
+                Haptics.light();
+                this.updateHud();
+            }
+
+            if (this.birdX + this.birdR > p.x && this.birdX - this.birdR < p.x + this.pipeW) {
+                if (this.bird.y - this.birdR < p.gapY - this.gapH / 2 || this.bird.y + this.birdR > p.gapY + this.gapH / 2) {
+                    return this.die();
+                }
+            }
+        }
+        this.pipes = this.pipes.filter(p => p.x > -this.pipeW - 50);
+    }
+
+    die() {
+        if (this.state !== 'playing') {
+            return;
+        }
+        this.state = 'dead';
+        AudioEngine.hit();
+        Haptics.heavy();
+        Camera.add(1.5);
+        
+        Particles.burst(this.birdX, this.bird.y, 50, {
+            color: '#ff2d78',
+            minSpeed: 150,
+            maxSpeed: 500,
+            gravity: 600
+        });
+        
+        Particles.burst(this.birdX, this.bird.y, 30, {
+            color: '#ffc531',
+            minSpeed: 100,
+            maxSpeed: 350,
+            gravity: 500
+        });
+        
+        setTimeout(() => {
+            App.gameOver('flappy', this.score);
+        }, 1000);
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.groundY);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(0.5, '#0f1423');
+        bg.addColorStop(1, '#2a0f3a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        for (const s of this.stars) {
+            ctx.globalAlpha = 0.3 + Math.sin(this.time * 2 + s.p) * 0.3;
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(s.x, s.y, s.s, s.s);
+        }
+        ctx.globalAlpha = 1;
+
+        for (const m of this.mountains) {
+            ctx.fillStyle = 'rgba(20, 10, 40, 0.85)';
+            ctx.beginPath();
+            ctx.moveTo(m.x, this.groundY);
+            ctx.lineTo(m.x + m.w / 2, this.groundY - m.h);
+            ctx.lineTo(m.x + m.w, this.groundY);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        for (const c of this.clouds) {
+            ctx.fillStyle = 'rgba(0,229,255,0.06)';
+            ctx.beginPath();
+            ctx.arc(c.x + c.w / 2, c.y, c.w / 3, 0, 6.28);
+            ctx.arc(c.x + c.w * 0.3, c.y + 15, c.w / 4, 0, 6.28);
+            ctx.arc(c.x + c.w * 0.7, c.y + 15, c.w / 4, 0, 6.28);
+            ctx.fill();
+        }
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 38px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('FLAPPY NEON', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 30);
+            Camera.reset(ctx);
+            return;
+        }
+
+        for (const p of this.pipes) {
+            const topH = p.gapY - this.gapH / 2;
+            const botY = p.gapY + this.gapH / 2;
+            const botH = this.groundY - botY;
+            
+            const pg = ctx.createLinearGradient(p.x, 0, p.x + this.pipeW, 0);
+            pg.addColorStop(0, p.color);
+            pg.addColorStop(0.5, this.lighten(p.color, 60));
+            pg.addColorStop(1, this.darken(p.color, 60));
+            
+            ctx.fillStyle = pg;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 20;
+            
+            ctx.fillRect(p.x, 70, this.pipeW, topH - 70);
+            ctx.fillRect(p.x, botY, this.pipeW, botH);
+            
+            const cap = 30;
+            ctx.fillRect(p.x - 6, topH - cap, this.pipeW + 12, cap);
+            ctx.fillRect(p.x - 6, botY, this.pipeW + 12, cap);
+            
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(p.x, 70, this.pipeW, topH - 70);
+            ctx.strokeRect(p.x, botY, this.pipeW, botH);
+        }
+
+        const gg = ctx.createLinearGradient(0, this.groundY, 0, this.h);
+        gg.addColorStop(0, '#1a0a35');
+        gg.addColorStop(1, '#000');
+        ctx.fillStyle = gg;
+        ctx.fillRect(0, this.groundY, this.w, this.h - this.groundY);
+
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.moveTo(0, this.groundY);
+        ctx.lineTo(this.w, this.groundY);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        Particles.render(ctx);
+
+        const bx = this.birdX;
+        const by = this.bird.y;
+        const br = this.birdR;
+        
+        ctx.save();
+        ctx.translate(bx, by);
+        ctx.rotate(this.bird.rot);
+
+        ctx.fillStyle = '#ffc531';
+        ctx.shadowColor = '#ffc531';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, br * 1.3, br, 0, 0, 6.28);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        const wy = this.bird.wing * 18;
+        ctx.fillStyle = '#ff9a00';
+        ctx.beginPath();
+        ctx.ellipse(-br * 0.2, wy * 0.5, br * 0.7, br * 0.4, 0, 0, 6.28);
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(br * 0.4, -br * 0.2, br * 0.35, 0, 6.28);
+        ctx.fill();
+        
+        ctx.fillStyle = '#04101a';
+        ctx.beginPath();
+        ctx.arc(br * 0.5, -br * 0.2, br * 0.15, 0, 6.28);
+        ctx.fill();
+
+        ctx.fillStyle = '#ff7a00';
+        ctx.beginPath();
+        ctx.moveTo(br, 0);
+        ctx.lineTo(br * 1.5, br * 0.15);
+        ctx.lineTo(br, br * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+
+        Camera.reset(ctx);
+    }
+
+    lighten(hex, amt) {
+        const h = hex.replace('#', '');
+        return '#' + [0, 2, 4].map(i => Math.min(255, parseInt(h.substr(i, 2), 16) + amt).toString(16).padStart(2, '0')).join('');
+    }
+
+    darken(hex, amt) {
+        const h = hex.replace('#', '');
+        return '#' + [0, 2, 4].map(i => Math.max(0, parseInt(h.substr(i, 2), 16) - amt).toString(16).padStart(2, '0')).join('');
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) {
+            this.canvas.removeEventListener('pointerdown', this._touch);
+        }
+        if (this._key) {
+            window.removeEventListener('keydown', this._key);
+        }
+    }
+};
+
+window.Game_snake = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.cell = Math.floor(Math.min((this.w - 20) / 20, (this.h - 160) / 24));
+        this.cols = Math.floor((this.w - 20) / this.cell);
+        this.rows = Math.floor((this.h - 160) / this.cell);
+        this.offX = (this.w - this.cols * this.cell) / 2;
+        this.offY = (this.h - this.rows * this.cell) / 2 + 30;
+    }
+
+    bindInputs() {
+        this._key = (e) => {
+            if (this.state === 'menu' || this.state === 'dead') {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    this.startGame();
+                }
+                return;
+            }
+            if (this.state !== 'playing') {
+                return;
+            }
+            
+            const m = {
+                ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+                ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+                w: { x: 0, y: -1 }, s: { x: 0, y: 1 }, a: { x: -1, y: 0 }, d: { x: 1, y: 0 }
+            };
+            const nd = m[e.key];
+            if (nd) {
+                e.preventDefault();
+                if (nd.x !== -this.dir.x || nd.y !== -this.dir.y) {
+                    this.nextDir = nd;
+                }
+            }
+        };
+        window.addEventListener('keydown', this._key);
+
+        this._start = null;
+        this._down = (e) => {
+            this._start = { x: e.clientX, y: e.clientY };
+        };
+        
+        this._up = (e) => {
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+            if (!this._start) {
+                return;
+            }
+            
+            const dx = e.clientX - this._start.x;
+            const dy = e.clientY - this._start.y;
+            
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+                if (dx > 0 && this.dir.x !== -1) {
+                    this.nextDir = { x: 1, y: 0 };
+                } else if (dx < 0 && this.dir.x !== 1) {
+                    this.nextDir = { x: -1, y: 0 };
+                }
+            } else if (Math.abs(dy) > 30) {
+                if (dy > 0 && this.dir.y !== -1) {
+                    this.nextDir = { x: 0, y: 1 };
+                } else if (dy < 0 && this.dir.y !== 1) {
+                    this.nextDir = { x: 0, y: -1 };
+                }
+            }
+            this._start = null;
+        };
+        this.canvas.addEventListener('pointerdown', this._down);
+        this.canvas.addEventListener('pointerup', this._up);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.snake = [{ x: Math.floor(this.cols / 2), y: Math.floor(this.rows / 2) }];
+        this.dir = { x: 1, y: 0 };
+        this.nextDir = { x: 1, y: 0 };
+        this.food = this.spawnFood();
+        this.foodPulse = 0;
+        this.score = 0;
+        this.tick = 0;
+        this.speed = 0.15;
+        this.time = 0;
+        this.deathFlash = 0;
+        this.updateHud();
+    }
+
+    spawnFood() {
+        let guard = 0;
+        while (guard++ < 200) {
+            const f = {
+                x: randInt(0, this.cols - 1),
+                y: randInt(0, this.rows - 1)
+            };
+            if (!this.snake.some(s => s.x === f.x && s.y === f.y)) {
+                return f;
+            }
+        }
+        return { x: 0, y: 0 };
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">طول <b>${this.snake.length}</b></div>
+        `);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        this.time += dt;
+        this.foodPulse += dt * 5;
+        
+        if (this.deathFlash > 0) {
+            this.deathFlash -= dt;
+        }
+        
+        if (this.state !== 'playing') {
+            return;
+        }
+        
+        this.tick += dt;
+        if (this.tick >= this.speed) {
+            this.tick = 0;
+            this.dir = { ...this.nextDir };
+            
+            const head = {
+                x: this.snake[0].x + this.dir.x,
+                y: this.snake[0].y + this.dir.y
+            };
+
+            if (head.x < 0 || head.x >= this.cols || head.y < 0 || head.y >= this.rows) {
+                return this.die();
+            }
+            
+            for (let i = 0; i < this.snake.length; i++) {
+                if (this.snake[i].x === head.x && this.snake[i].y === head.y) {
+                    return this.die();
+                }
+            }
+
+            this.snake.unshift(head);
+
+            if (head.x === this.food.x && head.y === this.food.y) {
+                this.score += 15;
+                AudioEngine.coin();
+                Haptics.light();
+                
+                const fx = this.offX + head.x * this.cell + this.cell / 2;
+                const fy = this.offY + head.y * this.cell + this.cell / 2;
+                
+                Particles.burst(fx, fy, 20, {
+                    color: '#2bff88',
+                    minSpeed: 100,
+                    maxSpeed: 300,
+                    gravity: 300
+                });
+                
+                this.food = this.spawnFood();
+                this.foodPulse = 0;
+                this.speed = Math.max(0.06, this.speed - 0.005);
+                this.updateHud();
+            } else {
+                this.snake.pop();
+            }
+        }
+    }
+
+    die() {
+        if (this.state !== 'playing') {
+            return;
+        }
+        this.state = 'dead';
+        this.deathFlash = 0.6;
+        AudioEngine.hit();
+        Haptics.heavy();
+        Camera.add(1.2);
+        
+        const hx = this.offX + this.snake[0].x * this.cell + this.cell / 2;
+        const hy = this.offY + this.snake[0].y * this.cell + this.cell / 2;
+        
+        Particles.burst(hx, hy, 50, {
+            color: '#ff2d78',
+            minSpeed: 150,
+            maxSpeed: 500,
+            gravity: 500
+        });
+        
+        setTimeout(() => {
+            App.gameOver('snake', this.score);
+        }, 900);
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#2bff88';
+            ctx.font = 'bold 38px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#2bff88';
+            ctx.shadowBlur = 30;
+            ctx.fillText('SNAKE NEON', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 30);
+            Camera.reset(ctx);
+            return;
+        }
+
+        ctx.fillStyle = 'rgba(0,229,255,0.03)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(this.offX - 8, this.offY - 8, this.cols * this.cell + 16, this.rows * this.cell + 16, 16);
+        } else {
+            ctx.rect(this.offX - 8, this.offY - 8, this.cols * this.cell + 16, this.rows * this.cell + 16);
+        }
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(0,229,255,0.06)';
+        ctx.lineWidth = 1;
+        
+        for (let i = 0; i <= this.cols; i++) {
+            const x = this.offX + i * this.cell;
+            ctx.beginPath();
+            ctx.moveTo(x, this.offY);
+            ctx.lineTo(x, this.offY + this.rows * this.cell);
+            ctx.stroke();
+        }
+        
+        for (let j = 0; j <= this.rows; j++) {
+            const y = this.offY + j * this.cell;
+            ctx.beginPath();
+            ctx.moveTo(this.offX, y);
+            ctx.lineTo(this.offX + this.cols * this.cell, y);
+            ctx.stroke();
+        }
+
+        const fx = this.offX + this.food.x * this.cell + this.cell / 2;
+        const fy = this.offY + this.food.y * this.cell + this.cell / 2;
+        const fP = 1 + Math.sin(this.foodPulse) * 0.2;
+        
+        ctx.fillStyle = '#2bff88';
+        ctx.shadowColor = '#2bff88';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(fx, fy, this.cell * 0.35 * fP, 0, 6.28);
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(43,255,136,0.3)';
+        ctx.beginPath();
+        ctx.arc(fx, fy, this.cell * 0.55 * fP, 0, 6.28);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        for (let i = this.snake.length - 1; i >= 0; i--) {
+            const s = this.snake[i];
+            const x = this.offX + s.x * this.cell + 2;
+            const y = this.offY + s.y * this.cell + 2;
+            const w = this.cell - 4;
+            const alpha = i === 0 ? 1 : 0.9 - (i / this.snake.length) * 0.5;
+            
+            if (i === 0) {
+                ctx.fillStyle = '#00e5ff';
+                ctx.shadowColor = '#00e5ff';
+                ctx.shadowBlur = 25;
+            } else {
+                const g = ctx.createLinearGradient(x, y, x + w, y + w);
+                g.addColorStop(0, `rgba(0,229,255,${alpha})`);
+                g.addColorStop(1, `rgba(0,150,180,${alpha * 0.8})`);
+                ctx.fillStyle = g;
+            }
+            
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, w, w, w * 0.35);
+            } else {
+                ctx.rect(x, y, w, w);
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            if (i === 0) {
+                const es = Math.max(3, w * 0.2);
+                ctx.fillStyle = '#04101a';
+                if (this.dir.x === 1) {
+                    ctx.fillRect(x + w * 0.6, y + w * 0.25, es, es);
+                    ctx.fillRect(x + w * 0.6, y + w * 0.6, es, es);
+                } else if (this.dir.x === -1) {
+                    ctx.fillRect(x + w * 0.25, y + w * 0.25, es, es);
+                    ctx.fillRect(x + w * 0.25, y + w * 0.6, es, es);
+                } else if (this.dir.y === 1) {
+                    ctx.fillRect(x + w * 0.25, y + w * 0.6, es, es);
+                    ctx.fillRect(x + w * 0.6, y + w * 0.6, es, es);
+                } else {
+                    ctx.fillRect(x + w * 0.25, y + w * 0.25, es, es);
+                    ctx.fillRect(x + w * 0.6, y + w * 0.25, es, es);
+                }
+            }
+        }
+
+        Particles.render(ctx);
+        
+        if (this.deathFlash > 0) {
+            ctx.fillStyle = `rgba(255,45,120,${this.deathFlash})`;
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+        }
+        
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._key) {
+            window.removeEventListener('keydown', this._key);
+        }
+        if (this._down) {
+            this.canvas.removeEventListener('pointerdown', this._down);
+        }
+        if (this._up) {
+            this.canvas.removeEventListener('pointerup', this._up);
+        }
+    }
+};
