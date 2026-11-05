@@ -2599,3 +2599,1233 @@ window.Game_snake = class extends GameBase {
         }
     }
 };
+window.Game_breakout = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(600);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        this.paddleW = this.w * 0.25;
+        this.paddleH = 18;
+        this.paddleY = this.h - 90;
+        this.ballR = 10 * clamp(Math.min(this.w, this.h) / 500, 0.7, 1.4);
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu') {
+                this.startGame();
+                return;
+            }
+            if (this.state === 'ready') {
+                this.launch();
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.paddleX = clamp(e.clientX - r.left - this.paddleW / 2, 0, this.w - this.paddleW);
+            if (this.activePowerup === 'laser') {
+                this.shootLaser();
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._move = (e) => {
+            if (!e.buttons && this.state !== 'ready') {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            this.paddleX = clamp(e.clientX - r.left - this.paddleW / 2, 0, this.w - this.paddleW);
+        };
+        this.canvas.addEventListener('pointermove', this._move);
+
+        this._key = (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (this.state === 'menu') {
+                    this.startGame();
+                } else if (this.state === 'ready') {
+                    this.launch();
+                } else if (this.activePowerup === 'laser') {
+                    this.shootLaser();
+                }
+            }
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                this.keyLeft = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd') {
+                this.keyRight = true;
+            }
+        };
+        window.addEventListener('keydown', this._key);
+
+        this._keyUp = (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                this.keyLeft = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd') {
+                this.keyRight = false;
+            }
+        };
+        window.addEventListener('keyup', this._keyUp);
+    }
+
+    startGame() {
+        this.state = 'ready';
+        this.paddleX = (this.w - this.paddleW) / 2;
+        this.score = 0;
+        this.lives = 3;
+        this.level = 1;
+        this.balls = [{
+            x: this.w / 2,
+            y: this.paddleY - 25,
+            vx: 0,
+            vy: 0,
+            speed: 450,
+            trail: []
+        }];
+        this.bricks = [];
+        this.powerups = [];
+        this.lasers = [];
+        this.activePowerup = null;
+        this.powerupTimer = 0;
+        this.buildLevel();
+        this.updateHud();
+    }
+
+    buildLevel() {
+        this.bricks = [];
+        const rows = Math.min(4 + this.level, 8);
+        const cols = 9;
+        const bw = (this.w - 60) / cols;
+        const bh = 26;
+        const colors = ['#00e5ff', '#ff2d78', '#ffc531', '#a855f7', '#2bff88', '#ff7a00'];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (Math.random() < 0.1) {
+                    continue;
+                }
+                const isHard = Math.random() < 0.3;
+                this.bricks.push({
+                    x: 30 + c * bw + 3,
+                    y: 90 + r * (bh + 8),
+                    w: bw - 6,
+                    h: bh,
+                    color: colors[r % colors.length],
+                    hp: isHard ? 2 : 1,
+                    maxHp: isHard ? 2 : 1,
+                    alive: true
+                });
+            }
+        }
+    }
+
+    launch() {
+        this.state = 'playing';
+        for (const b of this.balls) {
+            b.vx = rand(-280, 280);
+            b.vy = -b.speed;
+        }
+        AudioEngine.tone(600, 0.1, 'sine', 0.1);
+    }
+
+    shootLaser() {
+        this.lasers.push({ x: this.paddleX + 8, y: this.paddleY, vy: -1200 });
+        this.lasers.push({ x: this.paddleX + this.paddleW - 8, y: this.paddleY, vy: -1200 });
+        AudioEngine.tone(900, 0.05, 'square', 0.1);
+        Haptics.light();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">❤️ ${this.lives} · موج ${this.level}</div>
+        `);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        if (this.keyLeft) {
+            this.paddleX = clamp(this.paddleX - 800 * dt, 0, this.w - this.paddleW);
+        }
+        if (this.keyRight) {
+            this.paddleX = clamp(this.paddleX + 800 * dt, 0, this.w - this.paddleW);
+        }
+
+        if (this.powerupTimer > 0) {
+            this.powerupTimer -= dt;
+            if (this.powerupTimer <= 0) {
+                if (this.activePowerup === 'wide') {
+                    this.paddleW = this.w * 0.25;
+                }
+                this.activePowerup = null;
+            }
+        }
+
+        if (this.state !== 'playing') {
+            if (this.state === 'ready') {
+                this.balls[0].x = this.paddleX + this.paddleW / 2;
+                this.balls[0].y = this.paddleY - 25;
+            }
+            return;
+        }
+
+        for (const b of this.balls) {
+            b.x += b.vx * dt;
+            b.y += b.vy * dt;
+
+            b.trail.push({ x: b.x, y: b.y, life: 0.25 });
+            for (const t of b.trail) {
+                t.life -= dt;
+            }
+            b.trail = b.trail.filter(t => t.life > 0);
+
+            if (b.x - this.ballR < 0) {
+                b.x = this.ballR;
+                b.vx *= -1;
+                AudioEngine.tone(400, 0.05, 'square', 0.06);
+            }
+            if (b.x + this.ballR > this.w) {
+                b.x = this.w - this.ballR;
+                b.vx *= -1;
+                AudioEngine.tone(400, 0.05, 'square', 0.06);
+            }
+            if (b.y - this.ballR < 70) {
+                b.y = this.ballR + 70;
+                b.vy *= -1;
+                AudioEngine.tone(400, 0.05, 'square', 0.06);
+            }
+
+            if (b.y + this.ballR > this.paddleY && b.y - this.ballR < this.paddleY + this.paddleH && b.x > this.paddleX && b.x < this.paddleX + this.paddleW && b.vy > 0) {
+                const hitPos = (b.x - this.paddleX) / this.paddleW;
+                const angle = (hitPos - 0.5) * Math.PI * 0.85;
+                const sp = Math.hypot(b.vx, b.vy);
+                b.vx = Math.sin(angle) * sp;
+                b.vy = -Math.abs(Math.cos(angle) * sp);
+                b.y = this.paddleY - this.ballR;
+                
+                AudioEngine.tone(700, 0.08, 'sine', 0.1);
+                Haptics.light();
+                
+                Particles.burst(b.x, b.y, 8, {
+                    color: '#ffc531',
+                    minSpeed: 60,
+                    maxSpeed: 180,
+                    angle: -Math.PI / 2
+                });
+            }
+        }
+
+        this.balls = this.balls.filter(b => b.y - this.ballR <= this.h);
+        
+        if (this.balls.length === 0) {
+            this.loseLife();
+        }
+
+        for (const l of this.lasers) {
+            l.y += l.vy * dt;
+        }
+        this.lasers = this.lasers.filter(l => l.y > 60);
+
+        for (let i = this.lasers.length - 1; i >= 0; i--) {
+            const l = this.lasers[i];
+            for (const br of this.bricks) {
+                if (!br.alive) {
+                    continue;
+                }
+                if (l.x > br.x && l.x < br.x + br.w && l.y > br.y && l.y < br.y + br.h) {
+                    this.hitBrick(br, l.x, l.y);
+                    this.lasers.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        for (const b of this.balls) {
+            for (const br of this.bricks) {
+                if (!br.alive) {
+                    continue;
+                }
+                if (b.x + this.ballR > br.x && b.x - this.ballR < br.x + br.w && b.y + this.ballR > br.y && b.y - this.ballR < br.y + br.h) {
+                    this.hitBrick(br, b.x, b.y);
+                    const cx = br.x + br.w / 2;
+                    const cy = br.y + br.h / 2;
+                    if (Math.abs(b.x - cx) / br.w > Math.abs(b.y - cy) / br.h) {
+                        b.vx *= -1;
+                    } else {
+                        b.vy *= -1;
+                    }
+                    break;
+                }
+            }
+        }
+
+        for (let i = this.powerups.length - 1; i >= 0; i--) {
+            const pu = this.powerups[i];
+            pu.y += 200 * dt;
+            if (pu.y + pu.w > this.paddleY && pu.y < this.paddleY + this.paddleH && pu.x + pu.w > this.paddleX && pu.x < this.paddleX + this.paddleW) {
+                this.activatePowerup(pu.type);
+                this.powerups.splice(i, 1);
+                continue;
+            }
+            if (pu.y > this.h) {
+                this.powerups.splice(i, 1);
+            }
+        }
+
+        if (this.bricks.every(br => !br.alive)) {
+            this.nextLevel();
+        }
+    }
+
+    hitBrick(br, hx, hy) {
+        br.hp--;
+        AudioEngine.tone(800, 0.05, 'square', 0.1);
+        Haptics.light();
+        Camera.add(0.08);
+        
+        Particles.burst(hx, hy, 6, {
+            color: br.color,
+            minSpeed: 60,
+            maxSpeed: 200,
+            gravity: 200
+        });
+        
+        if (br.hp <= 0) {
+            br.alive = false;
+            this.score += 25 * this.level;
+            Camera.add(0.15);
+            Particles.burst(br.x + br.w / 2, br.y + br.h / 2, 20, {
+                color: br.color,
+                minSpeed: 120,
+                maxSpeed: 400,
+                gravity: 500
+            });
+            if (Math.random() < 0.2) {
+                const types = ['multi', 'wide', 'laser'];
+                this.powerups.push({
+                    x: br.x + br.w / 2 - 14,
+                    y: br.y + br.h / 2 - 14,
+                    w: 28,
+                    h: 28,
+                    type: types[Math.floor(Math.random() * types.length)]
+                });
+            }
+            this.updateHud();
+        }
+    }
+
+    activatePowerup(type) {
+        AudioEngine.win();
+        Haptics.success();
+        Camera.add(0.3);
+        
+        if (type === 'multi') {
+            const base = this.balls[0];
+            this.balls.push(
+                { x: base.x, y: base.y, vx: base.vx + 250, vy: base.vy, speed: base.speed, trail: [] },
+                { x: base.x, y: base.y, vx: base.vx - 250, vy: base.vy, speed: base.speed, trail: [] }
+            );
+        } else if (type === 'wide') {
+            this.paddleW = this.w * 0.4;
+            this.activePowerup = 'wide';
+            this.powerupTimer = 12;
+        } else if (type === 'laser') {
+            this.activePowerup = 'laser';
+            this.powerupTimer = 10;
+        }
+    }
+
+    loseLife() {
+        this.lives--;
+        this.state = 'ready';
+        this.balls = [{
+            x: this.w / 2,
+            y: this.paddleY - 25,
+            vx: 0,
+            vy: 0,
+            speed: 450,
+            trail: []
+        }];
+        this.paddleX = (this.w - this.paddleW) / 2;
+        AudioEngine.hit();
+        Haptics.heavy();
+        Camera.add(1.2);
+        this.updateHud();
+        
+        if (this.lives <= 0) {
+            this.state = 'dead';
+            setTimeout(() => {
+                App.gameOver('breakout', this.score, { level: this.level });
+            }, 600);
+        }
+    }
+
+    nextLevel() {
+        this.level++;
+        this.buildLevel();
+        this.state = 'ready';
+        this.balls = [{
+            x: this.w / 2,
+            y: this.paddleY - 25,
+            vx: 0,
+            vy: 0,
+            speed: 450 + this.level * 30,
+            trail: []
+        }];
+        this.paddleX = (this.w - this.paddleW) / 2;
+        AudioEngine.win();
+        Haptics.success();
+        this.updateHud();
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#1a0a2a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('BREAKOUT PRO', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        for (const br of this.bricks) {
+            if (!br.alive) {
+                continue;
+            }
+            const g = ctx.createLinearGradient(br.x, br.y, br.x, br.y + br.h);
+            g.addColorStop(0, br.color);
+            g.addColorStop(1, 'rgba(0,0,0,0.6)');
+            ctx.fillStyle = g;
+            ctx.shadowColor = br.color;
+            ctx.shadowBlur = br.hp > 1 ? 18 : 8;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(br.x, br.y, br.w, br.h, 8);
+            } else {
+                ctx.rect(br.x, br.y, br.w, br.h);
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            if (br.hp > 1) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        for (const l of this.lasers) {
+            ctx.fillStyle = '#ffc531';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(l.x - 3, l.y, 6, 25);
+            ctx.shadowBlur = 0;
+        }
+
+        for (const pu of this.powerups) {
+            const color = pu.type === 'multi' ? '#ff2d78' : pu.type === 'wide' ? '#00e5ff' : '#ffc531';
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(pu.x + pu.w / 2, pu.y + pu.h / 2, pu.w / 2, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        Particles.render(ctx);
+
+        if (this.activePowerup === 'wide') {
+            ctx.fillStyle = '#00e5ff';
+        } else if (this.activePowerup === 'laser') {
+            ctx.fillStyle = '#ffc531';
+        } else {
+            ctx.fillStyle = '#00e5ff';
+        }
+        
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(this.paddleX, this.paddleY, this.paddleW, this.paddleH, 10);
+        } else {
+            ctx.rect(this.paddleX, this.paddleY, this.paddleW, this.paddleH);
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        for (const b of this.balls) {
+            for (const t of b.trail) {
+                ctx.globalAlpha = t.life * 4;
+                ctx.fillStyle = '#ffc531';
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, this.ballR * 0.8, 0, 6.28);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, this.ballR, 0, 6.28);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        if (this.state === 'ready') {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(this.w / 2 - 120, this.h / 2 - 30, 240, 50);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.fillText('برای شلیک ضربه بزن', this.w / 2, this.h / 2);
+        }
+
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) {
+            this.canvas.removeEventListener('pointerdown', this._touch);
+        }
+        if (this._move) {
+            this.canvas.removeEventListener('pointermove', this._move);
+        }
+        if (this._key) {
+            window.removeEventListener('keydown', this._key);
+        }
+        if (this._keyUp) {
+            window.removeEventListener('keyup', this._keyUp);
+        }
+    }
+};
+
+window.Game_memory = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        const topOff = 60;
+        const avail = Math.min(this.w - 40, this.h - topOff - 100);
+        this.cellSize = Math.floor(avail / 4);
+        this.gridW = 4 * this.cellSize;
+        this.gridH = 4 * this.cellSize;
+        this.gridX = (this.w - this.gridW) / 2;
+        this.gridY = topOff + (this.h - topOff - 100 - this.gridH) / 2;
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead') {
+                this.startGame();
+                return;
+            }
+            if (this.state !== 'playing' || this.lock) {
+                return;
+            }
+            const r = this.canvas.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+            const c = Math.floor((x - this.gridX) / this.cellSize);
+            const rr = Math.floor((y - this.gridY) / this.cellSize);
+            if (c >= 0 && c < 4 && rr >= 0 && rr < 4) {
+                this.flip(rr * 4 + c);
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+    }
+
+    startGame() {
+        this.state = 'playing';
+        const decks = [
+            ['🍎', '🍌', '🍇', '🍉', '🍓', '🍒', '🥝', '🍍'],
+            ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'],
+            ['🚀', '👽', '🌍', '🌙', '⭐', '☄️', '🛸', '🌌'],
+            ['😀', '😎', '😍', '🤔', '😴', '😭', '😡', '🤯']
+        ];
+        const d = decks[Math.floor(Math.random() * decks.length)];
+        const gameEmojis = [...d, ...d].sort(() => Math.random() - 0.5);
+        
+        this.cards = gameEmojis.map(e => ({
+            emoji: e,
+            flipped: true,
+            matched: false,
+            flipAnim: 1,
+            pulseAnim: 0,
+            errorAnim: 0
+        }));
+        
+        this.opened = [];
+        this.matched = 0;
+        this.moves = 0;
+        this.score = 0;
+        this.combo = 0;
+        this.bestCombo = 0;
+        this.lock = true;
+        this.timeElapsed = 0;
+        this.startTime = performance.now();
+        this.revealTimer = 2.5;
+        this.updateHud();
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">⏱ ${Math.floor(this.timeElapsed)}s · جفت ${this.matched}/8</div>
+        `);
+    }
+
+    flip(idx) {
+        const c = this.cards[idx];
+        if (c.flipped || c.matched) {
+            return;
+        }
+        
+        c.flipped = true;
+        c.flipAnim = 1;
+        AudioEngine.tone(600, 0.08, 'sine', 0.1);
+        Haptics.light();
+        
+        this.opened.push(idx);
+
+        if (this.opened.length === 2) {
+            this.lock = true;
+            this.moves++;
+            const [a, b] = this.opened;
+
+            if (this.cards[a].emoji === this.cards[b].emoji) {
+                this.combo++;
+                this.bestCombo = Math.max(this.bestCombo, this.combo);
+                const pts = 100 * (1 + Math.floor(this.combo / 2) * 0.5);
+                
+                setTimeout(() => {
+                    this.cards[a].matched = true;
+                    this.cards[b].matched = true;
+                    this.cards[a].pulseAnim = 1;
+                    this.cards[b].pulseAnim = 1;
+                    this.matched++;
+                    this.score += pts;
+                    
+                    AudioEngine.win();
+                    Haptics.success();
+                    Camera.add(0.15);
+
+                    const ax = this.gridX + (a % 4) * this.cellSize + this.cellSize / 2;
+                    const ay = this.gridY + Math.floor(a / 4) * this.cellSize + this.cellSize / 2;
+                    const bx = this.gridX + (b % 4) * this.cellSize + this.cellSize / 2;
+                    const by = this.gridY + Math.floor(b / 4) * this.cellSize + this.cellSize / 2;
+                    
+                    Particles.burst(ax, ay, 20, { color: '#2bff88', minSpeed: 80, maxSpeed: 250, gravity: 300 });
+                    Particles.burst(bx, by, 20, { color: '#2bff88', minSpeed: 80, maxSpeed: 250, gravity: 300 });
+
+                    this.opened = [];
+                    this.lock = false;
+                    this.updateHud();
+                    
+                    if (this.matched === 8) {
+                        this.gameOver(true);
+                    }
+                }, 500);
+            } else {
+                this.combo = 0;
+                this.score = Math.max(0, this.score - 15);
+                this.cards[a].errorAnim = 1;
+                this.cards[b].errorAnim = 1;
+                
+                AudioEngine.hit();
+                Haptics.heavy();
+                Camera.add(0.3);
+
+                setTimeout(() => {
+                    this.cards[a].flipped = false;
+                    this.cards[b].flipped = false;
+                    this.cards[a].errorAnim = 0;
+                    this.cards[b].errorAnim = 0;
+                    this.opened = [];
+                    this.lock = false;
+                    this.updateHud();
+                }, 900);
+            }
+        }
+    }
+
+    gameOver(win) {
+        this.state = win ? 'won' : 'dead';
+        if (win) {
+            const tb = Math.max(0, 1000 - Math.floor(this.timeElapsed) * 10);
+            const cb = this.bestCombo * 50;
+            this.score += tb + cb;
+            
+            AudioEngine.win();
+            Haptics.success();
+            Camera.add(0.8);
+        } else {
+            AudioEngine.lose();
+            Haptics.heavy();
+        }
+        setTimeout(() => {
+            App.gameOver('memory', this.score, { time: Math.floor(this.timeElapsed), combo: this.bestCombo });
+        }, 1000);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+
+        if (this.state === 'playing') {
+            this.timeElapsed = (performance.now() - this.startTime) / 1000;
+            this.updateHud();
+            if (this.revealTimer > 0) {
+                this.revealTimer -= dt;
+                if (this.revealTimer <= 0) {
+                    this.cards.forEach(c => {
+                        if (!c.matched) {
+                            c.flipped = false;
+                        }
+                    });
+                    this.lock = false;
+                    AudioEngine.tone(400, 0.2, 'triangle', 0.1);
+                }
+            }
+        }
+
+        for (const c of this.cards) {
+            if (c.flipAnim > 0) c.flipAnim = Math.max(0, c.flipAnim - dt * 4);
+            if (c.pulseAnim > 0) c.pulseAnim = Math.max(0, c.pulseAnim - dt * 3);
+            if (c.errorAnim > 0) c.errorAnim = Math.max(0, c.errorAnim - dt * 2);
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        const bg = ctx.createLinearGradient(0, 0, 0, this.h);
+        bg.addColorStop(0, '#05070d');
+        bg.addColorStop(1, '#0f1423');
+        ctx.fillStyle = bg;
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 36px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 30;
+            ctx.fillText('MEMORY MATCH', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        for (let i = 0; i < 16; i++) {
+            const c = this.cards[i];
+            let x = this.gridX + (i % 4) * this.cellSize + 5;
+            let y = this.gridY + Math.floor(i / 4) * this.cellSize + 5;
+            const w = this.cellSize - 10;
+            
+            let sx = 1;
+            let sy = 1;
+            
+            if (c.flipAnim > 0) {
+                sx = Math.abs(Math.cos(c.flipAnim * Math.PI));
+            }
+            if (c.pulseAnim > 0) {
+                const s = 1 + Math.sin(c.pulseAnim * Math.PI) * 0.15;
+                sx *= s;
+                sy *= s;
+            }
+            if (c.errorAnim > 0) {
+                x += Math.sin(c.errorAnim * 50) * 6;
+            }
+
+            ctx.save();
+            ctx.translate(x + w / 2, y + w / 2);
+            ctx.scale(sx, sy);
+            ctx.translate(-x - w / 2, -y - w / 2);
+
+            if (c.matched) {
+                ctx.fillStyle = 'rgba(43,255,136,0.15)';
+                ctx.shadowColor = '#2bff88';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x, y, w, w, 12);
+                else ctx.rect(x, y, w, w);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#2bff88';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else if (c.errorAnim > 0) {
+                ctx.fillStyle = 'rgba(255,45,120,0.15)';
+                ctx.shadowColor = '#ff2d78';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x, y, w, w, 12);
+                else ctx.rect(x, y, w, w);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#ff2d78';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else if (c.flipped || c.flipAnim > 0.5) {
+                ctx.fillStyle = 'rgba(0,229,255,0.15)';
+                ctx.shadowColor = '#00e5ff';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x, y, w, w, 12);
+                else ctx.rect(x, y, w, w);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#00e5ff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                const g = ctx.createLinearGradient(x, y, x + w, y + w);
+                g.addColorStop(0, '#111a2e');
+                g.addColorStop(1, '#0c1120');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x, y, w, w, 12);
+                else ctx.rect(x, y, w, w);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,229,255,0.2)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.fillStyle = 'rgba(0,229,255,0.4)';
+                ctx.font = `bold ${w * 0.4}px Tahoma`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('?', x + w / 2, y + w / 2);
+            }
+
+            if (c.flipped || c.matched) {
+                ctx.font = `${w * 0.55}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(c.emoji, x + w / 2, y + w / 2);
+            }
+            ctx.restore();
+        }
+
+        Particles.render(ctx);
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) {
+            this.canvas.removeEventListener('pointerdown', this._touch);
+        }
+    }
+};
+
+window.Game_2048 = class extends GameBase {
+    constructor() {
+        super();
+        Particles.init(400);
+        Input.bind(this.canvas);
+        this.recalc();
+        this.onResize = () => this.recalc();
+        this.state = 'menu';
+        this.bindInputs();
+    }
+
+    recalc() {
+        const topOff = 60;
+        const avail = Math.min(this.w - 40, this.h - topOff - 100);
+        this.cellSize = Math.floor(avail / 4);
+        this.gridW = 4 * this.cellSize;
+        this.gridH = 4 * this.cellSize;
+        this.gridX = (this.w - this.gridW) / 2;
+        this.gridY = topOff + (this.h - topOff - 100 - this.gridH) / 2;
+        this.gap = Math.max(6, this.cellSize * 0.08);
+    }
+
+    bindInputs() {
+        this._touch = (e) => {
+            e.preventDefault();
+            if (this.state === 'menu' || this.state === 'dead' || this.state === 'won') {
+                this.startGame();
+            }
+        };
+        this.canvas.addEventListener('pointerdown', this._touch, { passive: false });
+
+        this._key = (e) => {
+            if (this.state === 'menu' && (e.key === ' ' || e.key === 'Enter')) {
+                this.startGame();
+                return;
+            }
+            if (this.state !== 'playing') {
+                return;
+            }
+            const m = {
+                ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+                a: 'left', d: 'right', w: 'up', s: 'down'
+            };
+            if (m[e.key]) {
+                e.preventDefault();
+                this.move(m[e.key]);
+            }
+        };
+        window.addEventListener('keydown', this._key);
+
+        this._start = null;
+        this._down = (e) => {
+            this._start = { x: e.clientX, y: e.clientY };
+        };
+        
+        this._up = (e) => {
+            if (this.state !== 'playing' || !this._start) {
+                return;
+            }
+            const dx = e.clientX - this._start.x;
+            const dy = e.clientY - this._start.y;
+            if (Math.abs(dx) < 25 && Math.abs(dy) < 25) {
+                this._start = null;
+                return;
+            }
+            if (Math.abs(dx) > Math.abs(dy)) {
+                this.move(dx > 0 ? 'right' : 'left');
+            } else {
+                this.move(dy > 0 ? 'down' : 'up');
+            }
+            this._start = null;
+        };
+        this.canvas.addEventListener('pointerdown', this._down);
+        this.canvas.addEventListener('pointerup', this._up);
+    }
+
+    startGame() {
+        this.state = 'playing';
+        this.board = Array.from({ length: 4 }, () => Array(4).fill(0));
+        this.score = 0;
+        this.won = false;
+        this.moves = 0;
+        this.animations = [];
+        this.addTile();
+        this.addTile();
+        this.updateHud();
+    }
+
+    addTile() {
+        const empty = [];
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                if (this.board[r][c] === 0) {
+                    empty.push({ r, c });
+                }
+            }
+        }
+        if (!empty.length) {
+            return;
+        }
+        const s = empty[Math.floor(Math.random() * empty.length)];
+        const v = Math.random() < 0.9 ? 2 : 4;
+        this.board[s.r][s.c] = v;
+        this.animations.push({
+            r: s.r,
+            c: s.c,
+            val: v,
+            type: 'spawn',
+            progress: 0,
+            duration: 0.2
+        });
+    }
+
+    updateHud() {
+        this.setHud(`
+            <div class="hud-pill">امتیاز <b>${this.score}</b></div>
+            <div class="hud-pill">حرکت ${this.moves}</div>
+        `);
+    }
+
+    move(dir) {
+        if (this.state !== 'playing') {
+            return;
+        }
+        let moved = false;
+        const b = this.board.map(r => r.slice());
+
+        const merge = (line, r, c, dr, dc) => {
+            const arr = line.filter(v => v !== 0);
+            const out = [];
+            for (let i = 0; i < arr.length; i++) {
+                if (i < arr.length - 1 && arr[i] === arr[i + 1]) {
+                    const m = arr[i] * 2;
+                    out.push(m);
+                    this.score += m;
+                    i++;
+                    moved = true;
+                    const tr = r + out.length * dr;
+                    const tc = c + out.length * dc;
+                    this.animations.push({
+                        r: tr,
+                        c: tc,
+                        val: m,
+                        type: 'merge',
+                        progress: 0,
+                        duration: 0.3
+                    });
+                    AudioEngine.tone(500 + Math.log2(m) * 60, 0.1, 'triangle', 0.1);
+                    Haptics.light();
+                } else {
+                    out.push(arr[i]);
+                }
+            }
+            while (out.length < 4) {
+                out.push(0);
+            }
+            return out;
+        };
+
+        if (dir === 'left' || dir === 'right') {
+            for (let r = 0; r < 4; r++) {
+                let row = b[r].slice();
+                if (dir === 'right') {
+                    row.reverse();
+                }
+                row = merge(row, r, dir === 'right' ? 3 : 0, 0, dir === 'right' ? -1 : 1);
+                if (dir === 'right') {
+                    row.reverse();
+                }
+                if (row.join() !== b[r].join()) {
+                    moved = true;
+                }
+                b[r] = row;
+            }
+        } else {
+            for (let c = 0; c < 4; c++) {
+                let col = b.map(r => r[c]);
+                if (dir === 'down') {
+                    col.reverse();
+                }
+                col = merge(col, dir === 'down' ? 3 : 0, c, dir === 'down' ? -1 : 1, 0);
+                if (dir === 'down') {
+                    col.reverse();
+                }
+                for (let r = 0; r < 4; r++) {
+                    if (b[r][c] !== col[r]) {
+                        moved = true;
+                    }
+                    b[r][c] = col[r];
+                }
+            }
+        }
+
+        if (moved) {
+            this.board = b;
+            this.moves++;
+            this.addTile();
+            this.updateHud();
+            if (this.checkWin() && !this.won) {
+                this.won = true;
+                AudioEngine.win();
+                Haptics.success();
+                Camera.add(0.5);
+            }
+            if (this.checkLose()) {
+                this.gameOver(false);
+            }
+        }
+    }
+
+    checkWin() {
+        for (const r of this.board) {
+            for (const v of r) {
+                if (v >= 2048) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    checkLose() {
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                if (this.board[r][c] === 0) {
+                    return false;
+                }
+                if (c < 3 && this.board[r][c] === this.board[r][c + 1]) {
+                    return false;
+                }
+                if (r < 3 && this.board[r][c] === this.board[r + 1][c]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    gameOver(win) {
+        this.state = win ? 'won' : 'dead';
+        AudioEngine[win ? 'win' : 'lose']();
+        Haptics[win ? 'success' : 'heavy']();
+        Camera.add(win ? 0.5 : 1);
+        setTimeout(() => {
+            App.gameOver('2048', this.score, { moves: this.moves });
+        }, 600);
+    }
+
+    update(dt) {
+        Particles.update(dt);
+        Camera.update(dt);
+        for (let i = this.animations.length - 1; i >= 0; i--) {
+            this.animations[i].progress += dt;
+            if (this.animations[i].progress >= this.animations[i].duration) {
+                if (this.animations[i].type === 'merge') {
+                    const x = this.gridX + this.animations[i].c * (this.cellSize + this.gap * 0.5) + this.cellSize / 2;
+                    const y = this.gridY + this.animations[i].r * (this.cellSize + this.gap * 0.5) + this.cellSize / 2;
+                    Particles.burst(x, y, 10, { color: '#ffc531', minSpeed: 60, maxSpeed: 200, gravity: 300 });
+                }
+                this.animations.splice(i, 1);
+            }
+        }
+    }
+
+    render() {
+        const ctx = this.ctx;
+        Camera.apply(ctx);
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+
+        if (this.state === 'menu') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-30, -30, this.w + 60, this.h + 60);
+            ctx.fillStyle = '#ffc531';
+            ctx.font = 'bold 38px Tahoma';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#ffc531';
+            ctx.shadowBlur = 30;
+            ctx.fillText('2048 MERGE', this.w / 2, this.h / 2 - 30);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '18px Tahoma';
+            ctx.fillText('برای شروع ضربه بزن', this.w / 2, this.h / 2 + 20);
+            Camera.reset(ctx);
+            return;
+        }
+
+        ctx.fillStyle = 'rgba(0,229,255,0.04)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(this.gridX - 8, this.gridY - 8, this.gridW + 16, this.gridH + 16, 16);
+        } else {
+            ctx.rect(this.gridX - 8, this.gridY - 8, this.gridW + 16, this.gridH + 16);
+        }
+        ctx.fill();
+
+        const colors = {
+            2: '#1a2a4a', 4: '#1f3a5a', 8: '#2a5a6a', 16: '#2a7a6a', 32: '#3a9a5a',
+            64: '#5aba3a', 128: '#9aca2a', 256: '#daca2a', 512: '#eaaa2a', 1024: '#ea7a2a', 2048: '#ea3a5a'
+        };
+
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+                const x = this.gridX + c * (this.cellSize + this.gap * 0.5);
+                const y = this.gridY + r * (this.cellSize + this.gap * 0.5);
+                const v = this.board[r][c];
+
+                ctx.fillStyle = v === 0 ? 'rgba(255,255,255,0.04)' : (colors[v] || '#ff2d78');
+                
+                let sc = 1;
+                const a = this.animations.find(a => a.r === r && a.c === c);
+                if (a) {
+                    if (a.type === 'spawn') {
+                        sc = a.progress / a.duration;
+                    } else if (a.type === 'merge') {
+                        const t = a.progress / a.duration;
+                        sc = 1 + Math.sin(t * Math.PI) * 0.2;
+                    }
+                }
+
+                ctx.save();
+                ctx.translate(x + this.cellSize / 2, y + this.cellSize / 2);
+                ctx.scale(sc, sc);
+                ctx.translate(-x - this.cellSize / 2, -y - this.cellSize / 2);
+
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(x, y, this.cellSize, this.cellSize, 10);
+                } else {
+                    ctx.rect(x, y, this.cellSize, this.cellSize);
+                }
+                ctx.fill();
+                
+                if (v !== 0) {
+                    if (v >= 8) {
+                        ctx.shadowColor = colors[v];
+                        ctx.shadowBlur = 15;
+                    }
+                    ctx.fillStyle = v >= 8 ? '#fff' : '#c5cee0';
+                    ctx.font = `900 ${Math.max(16, this.cellSize * 0.35)}px Tahoma`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(v, x + this.cellSize / 2, y + this.cellSize / 2);
+                    ctx.shadowBlur = 0;
+                }
+                ctx.restore();
+            }
+        }
+        Particles.render(ctx);
+        Camera.reset(ctx);
+    }
+
+    stop() {
+        super.stop();
+        if (this._touch) {
+            this.canvas.removeEventListener('pointerdown', this._touch);
+        }
+        if (this._key) {
+            window.removeEventListener('keydown', this._key);
+        }
+        if (this._down) {
+            this.canvas.removeEventListener('pointerdown', this._down);
+        }
+        if (this._up) {
+            this.canvas.removeEventListener('pointerup', this._up);
+        }
+    }
+};
