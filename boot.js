@@ -3,7 +3,7 @@ const load = src => new Promise((resolve, reject) => {
     script.src = src;
     script.async = false;
     script.onload = resolve;
-    script.onerror = () => reject(new Error(`Failed to load: ${src}`));
+    script.onerror = () => reject(new Error(`فایل پیدا نشد: ${src}`));
     document.head.appendChild(script);
 });
 
@@ -22,7 +22,8 @@ const init = async () => {
         document.body.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#05070d;color:#eef2ff;text-align:center;padding:20px;">
                 <h2 style="color:#ff2d78;margin-bottom:10px;">خطا در بارگذاری</h2>
-                <p style="font-size:14px;color:#6b7a99;">اتصال خود را بررسی کنید و صفحه را رفرش نمایید.</p>
+                <p style="font-size:16px;color:#fff;background:#1e293b;padding:10px;border-radius:8px;font-family:monospace;" dir="ltr">${error.message}</p>
+                <p style="font-size:14px;color:#6b7a99;margin-top:10px;">لطفاً مطمئن شوید این فایل در ریشه پروژه گیت‌هاب شما وجود دارد</p>
                 <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;border-radius:10px;border:none;background:#00e5ff;color:#000;font-weight:bold;cursor:pointer;">تلاش مجدد</button>
             </div>`;
         return;
