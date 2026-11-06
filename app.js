@@ -4,52 +4,54 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const bind = k => $$(`[data-bind="${k}"]`);
-const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];  
+const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];
 const REGISTRY_MAP = new Map();
 
-const state = {
-  tab: 'home',
-  cat: 'all',
-  lobby: null,
-  lbFilter: 'global',
-  game: null,
-  gameId: null,
-  raf: 0,
-  last: 0,
-  hasChangedName: localStorage.getItem('nexus-name-changed') === 'true'
-};
+const state = { tab: 'home', cat: 'all', lobby: null, lbFilter: 'global', game: null, gameId: null, raf: 0, last: 0, hasChangedName: localStorage.getItem('nexus-name-changed') === 'true' };
 
-const setScreen = id => {
-  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + id));
-  $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === id));
-  state.tab = id;
+const setScreen = id => { 
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + id)); 
+  $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === id)); 
+  state.tab = id; 
 };
 
 const go = id => {
-  if (state.tab === 'play' && id !== 'play') quit();
+  if (id !== 'play' && state.tab === 'play') {
+    if (state.game && state.game.stop) state.game.stop();
+    cancelAnimationFrame(state.raf);
+    state.raf = 0;
+    state.game = null;
+    $('#game-canvas').classList.remove('on');
+    $('#game-overlay').classList.remove('on');
+    const dpad = bind('dpad')[0];
+    if (dpad) dpad.hidden = true;
+    const ctx = $('#game-canvas').getContext('2d');
+    ctx.clearRect(0, 0, $('#game-canvas').width, $('#game-canvas').height);
+    state.lobby = null;
+  }
   setScreen(id);
   if (id === 'leaderboard') drawLeaderboard();
   if (id === 'profile') drawProfile();
 };
 
-const toast = msg => {
-  const el = $('#toast');
+const toast = msg => { 
+  const el = $('#toast'); 
   if (!el) return;
-  el.textContent = msg;
-  el.classList.add('on');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.remove('on'), 2200);
+  el.textContent = msg; 
+  el.classList.add('on'); 
+  clearTimeout(toast._t); 
+  toast._t = setTimeout(() => el.classList.remove('on'), 2200); 
 };
 
-const theme = {
-  get: () => localStorage.getItem('nexus-theme') || 'dark',
-  set: v => { localStorage.setItem('nexus-theme', v); theme.apply(); },
-  apply: () => {
-    const t = theme.get();
-    document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
-    bind('theme-icon').forEach(el => el.textContent = t === 'light' ? '☀' : '☾');
-  },
-  toggle: () => theme.set(theme.get() === 'light' ? 'dark' : 'light')
+const theme = { 
+  get: () => localStorage.getItem('nexus-theme') || 'dark', 
+  set: v => { localStorage.setItem('nexus-theme', v); theme.apply(); }, 
+  apply: () => { 
+    const t = theme.get(); 
+    document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark'; 
+    bind('theme-icon').forEach(el => el.textContent = t === 'light' ? '☀' : '☾'); 
+  }, 
+  toggle: () => theme.set(theme.get() === 'light' ? 'dark' : 'light') 
 };
 
 const drawProfile = () => {
@@ -62,7 +64,7 @@ const drawProfile = () => {
   const f = $('#username-field'); if (f) f.value = d.name;
   const rec = bind('profile-records')[0];
   if (rec) {
-    const items = window.GAME_REGISTRY.filter(g => (d.best[g.id] || 0) > 0).map(g => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span>${g.icon} ${g.fa}</span><b style="color:var(--gold)">${d.best[g.id]}</b></div>`);
+    const items = window.GAME_REGISTRY.filter(g => (d.best[g.id] || 0) > 0).map(g => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span>${g.icon} ${g.fa}</span><b style="color:var(--gold)">${esc(d.best[g.id])}</b></div>`);
     rec.innerHTML = items.length ? items.join('') : '<p style="text-align:center;font-size:12px">هنوز رکوردی ثبت نشده</p>';
   }
 };
@@ -93,7 +95,7 @@ const drawGames = () => {
   bind('section-title').forEach(el => el.textContent = `همه بازی‌ها · ${list.length}`);
   box.innerHTML = list.map(g => {
     const best = Storage.data.best[g.id] || 0;
-    return `<div class="item" data-game="${g.id}"><span class="item-icon">${g.icon}</span><div class="item-body"><div class="item-name">${g.fa}</div><div class="item-en">${g.en}</div><div class="item-desc">${g.desc}</div>${best ? `<span class="item-best">رکورد: ${best}</span>` : ''}</div></div>`;
+    return `<div class="item" data-game="${g.id}"><span class="item-icon">${g.icon}</span><div class="item-body"><div class="item-name">${g.fa}</div><div class="item-en">${g.en}</div><div class="item-desc">${g.desc}</div>${best ? `<span class="item-best">رکورد: ${esc(best)}</span>` : ''}</div></div>`;
   }).join('');
 };
 
@@ -108,7 +110,10 @@ const drawLobby = id => {
   go('lobby');
 };
 
-const lobbyAbout = () => { const m = state.lobby; if (!m) return; bind('lobby-extra')[0].innerHTML = `<h4>📖 نحوه بازی</h4><p>${m.desc}. هدف شکستن رکورد ${Storage.data.best[m.id] || 0} است.</p>`; };
+const lobbyAbout = () => { 
+  const m = state.lobby; if (!m) return; 
+  bind('lobby-extra')[0].innerHTML = `<h4>📖 نحوه بازی</h4><p>${m.desc}. هدف شکستن رکورد ${esc(Storage.data.best[m.id] || 0)} است.</p>`; 
+};
 
 const lobbyLeaderboard = async () => {
   const m = state.lobby; if (!m) return;
@@ -116,19 +121,21 @@ const lobbyLeaderboard = async () => {
   box.innerHTML = '<h4>🏆 جدول امتیازات</h4><p>در حال دریافت...</p>';
   const list = await Net.get(m.id);
   if (!list.length) return box.innerHTML += '<p style="text-align:center">هنوز رکوردی ثبت نشده</p>';
-  box.innerHTML += list.slice(0, 5).map((e, i) => `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:var(--muted)">${i + 1}. ${e.name}</span><b style="color:var(--accent)">${e.score}</b></div>`).join('');
+  box.innerHTML += list.slice(0, 5).map((e, i) => `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:var(--muted)">${i + 1}. ${esc(e.name)}</span><b style="color:var(--accent)">${esc(e.score)}</b></div>`).join('');
 };
 
 const playGame = () => {
-  const m = state.lobby; if (!m) return;
+  const m = state.lobby; 
+  if (!m) return;
   const Ctor = window['Game_' + m.id];
   if (typeof Ctor !== 'function') return toast('بازی بارگذاری نشد');
   
-  state.gameId = m.id; state.game = new Ctor();
+  state.gameId = m.id; 
+  state.game = new Ctor();
+  
   bind('play-title').forEach(el => el.textContent = m.fa);
   bind('hud')[0].innerHTML = '';
   $('#game-overlay').classList.remove('on');
-  
   const dpad = bind('dpad')[0];
   if (dpad) dpad.hidden = !['snake'].includes(m.id);
   
@@ -138,10 +145,12 @@ const playGame = () => {
   if (state.game.resize) state.game.resize();
   
   try { 
-    state.game.start(); 
+    const startFn = state.game.start || state.game.startGame;
+    if (typeof startFn === 'function') startFn.call(state.game);
   } catch (e) { 
     console.error(e); 
-    return quit(); 
+    toast('خطا در شروع بازی'); 
+    return go('home'); 
   }
   
   state.last = performance.now(); 
@@ -158,21 +167,12 @@ const loop = now => {
     state.game.render(); 
   } catch (e) { 
     console.error(e); 
-    return quit(); 
+    return go('home'); 
   }
   state.raf = requestAnimationFrame(loop);
 };
 
-const quit = () => {
-  try { state.game?.stop?.(); } catch {}
-  cancelAnimationFrame(state.raf); state.raf = 0; state.game = null;
-  $('#game-canvas').classList.remove('on'); $('#game-overlay').classList.remove('on');
-  const dpad = bind('dpad')[0];
-  if (dpad) dpad.hidden = true;
-  const ctx = $('#game-canvas').getContext('2d'); ctx.clearRect(0, 0, $('#game-canvas').width, $('#game-canvas').height);
-  state.lobby = null; 
-  go('home');
-};
+const quit = () => { go('home'); };
 
 const drawLeaderboard = async () => {
   const isGlobal = state.lbFilter === 'global';
@@ -181,10 +181,11 @@ const drawLeaderboard = async () => {
   box.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)">⏳ در حال دریافت...</div>';
   const list = isGlobal ? await Net.getGlobal() : await Net.get(state.lbFilter);
   if (!list.length) return box.innerHTML = '<div class="card center"><p style="font-size:32px">👻</p><p>هنوز رکوردی ثبت نشده</p></div>';
+  
   box.innerHTML = list.map((e, i) => {
     let medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
     const val = isGlobal ? e.totalScore : e.score;
-    return `<div class="item"><div class="item-body" style="flex-direction:row;align-items:center;gap:10px"><div style="font-size:18px;width:28px;text-align:center">${medal}</div><div class="item-name" style="margin:0;font-size:15px">${e.name}</div></div><b style="color:var(--accent);font-size:16px">${val}</b></div>`;
+    return `<div class="item"><div class="item-body" style="flex-direction:row;align-items:center;gap:10px"><div style="font-size:18px;width:28px;text-align:center">${medal}</div><div class="item-name" style="margin:0;font-size:15px">${esc(e.name)}</div></div><b style="color:var(--accent);font-size:16px">${esc(val)}</b></div>`;
   }).join('');
 };
 
@@ -222,6 +223,7 @@ const init = () => {
 
 window.App = {
   gameOver: (id, score, extras) => {
+    if (state.game && state.game.stop) state.game.stop();
     cancelAnimationFrame(state.raf); state.raf = 0;
     const prev = Storage.data.best[id] || 0;
     const isNew = Storage.setBest(id, score);
@@ -230,13 +232,13 @@ window.App = {
     if (reward) Storage.addCoins(reward);
     Net.submit(id, score, Storage.data.name);
     const ov = $('#game-overlay');
-    ov.innerHTML = `<h2 style="color:${isNew ? 'var(--ok)' : 'var(--accent-2)'}">${isNew ? '🎉 رکورد جدید!' : 'بازی تمام شد'}</h2><div class="score">${score}</div><div class="sub">قبلی: ${prev} · سکه: ${reward} 💎</div><button class="btn primary" onclick="App.restart()">بازی مجدد</button><button class="btn" onclick="App.quit()">خانه</button>`;
+    ov.innerHTML = `<h2 style="color:${isNew ? 'var(--ok)' : 'var(--accent-2)'}">${isNew ? '🎉 رکورد جدید!' : 'بازی تمام شد'}</h2><div class="score">${esc(score)}</div><div class="sub">قبلی: ${esc(prev)} · سکه: ${esc(reward)} 💎</div><button class="btn primary" onclick="App.restart()">بازی مجدد</button><button class="btn" onclick="App.quit()">خانه</button>`;
     ov.classList.add('on');
     AudioEngine[isNew ? 'win' : 'lose']?.(); Haptics[isNew ? 'success' : 'heavy']?.();
     state.game = null;
   },
   restart: () => { $('#game-overlay').classList.remove('on'); playGame(); },
-  quit,
+  quit: quit,
   setDirection: d => state.game?.setDirection?.(d)
 };
 
