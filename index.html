@@ -93,13 +93,14 @@
 
   <div id="screen-play" class="screen no-nav">
     <header class="bar"><button class="back" data-action="quit">→</button><h3 data-bind="play-title">بازی</h3><span></span></header>
-    <canvas id="game-canvas"></canvas>
-    <div class="hud" data-bind="hud"></div>
-    <div class="overlay" id="game-overlay"></div>
-    <div class="dpad" data-bind="dpad" hidden>
-      <button data-dir="up">▲</button>
-      <div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>
+    
+    <div class="game-viewport" id="game-viewport">
+        <canvas id="game-canvas"></canvas>
+        <div class="hud" data-bind="hud"></div>
+        <div class="overlay" id="game-overlay"></div>
     </div>
+    
+    <div class="controls-area" id="game-controls"></div>
   </div>
 
   <nav class="nav">
@@ -112,14 +113,6 @@
 </div>
 
 <div id="toast" data-bind="toast"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-    if (window.eruda) {
-        eruda.init();
-        console.log("✅ کنسول Eruda با موفقیت فعال شد.");
-    }
-</script>
 <script src="firebase-config.js"></script>
 <script src="boot.js"></script>
 </body>
