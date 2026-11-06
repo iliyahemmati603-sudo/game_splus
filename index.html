@@ -1,161 +1,114 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-    <title>Nexus Arcade</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nexus Arcade</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="boot"><div class="logo">NEXUS ARCADE</div><div class="spin"></div></div>
+<div id="boot"><div class="boot-mark">NEXUS</div><div class="boot-bar"><span></span></div></div>
 
 <div id="app">
-    <div id="screen-home" class="screen active">
-        <div class="topbar">
-            <div class="profile-mini" onclick="App.go('profile')">
-                <div class="avatar" id="home-avatar">?</div>
-                <div>
-                    <div class="p-name" id="home-name">بازیکن</div>
-                    <div class="p-sub">آنلاین</div>
-                </div>
-            </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <button class="icon-btn" onclick="App.toggleTheme()" id="theme-btn">🌙</button>
-                <div class="coin-badge" onclick="App.go('profile')">💎 <span id="home-coins">0</span></div>
-            </div>
-        </div>
-        <div class="hero">
-            <div class="hero-title">NEXUS ARCADE</div>
-            <div class="hero-sub">بهترین بازی‌ها، یکجا</div>
-        </div>
-        <div class="cat-scroll" id="category-scroll"></div>
-        <div class="section-label" id="section-title">همه بازی‌ها</div>
-        <div class="game-list" id="game-grid"></div>
-
-        <nav class="nav-bar">
-            <button class="nav-btn active" data-screen="home"><span class="n-icon">🏠</span>خانه</button>
-            <button class="nav-btn" data-screen="leaderboard"><span class="n-icon">🏆</span>رتبه‌بندی</button>
-            <button class="nav-btn" data-screen="profile"><span class="n-icon">👤</span>پروفایل</button>
-            <button class="nav-btn" data-screen="settings"><span class="n-icon">⚙️</span>تنظیمات</button>
-            <button class="nav-btn" data-screen="about"><span class="n-icon">ℹ️</span>درباره ما</button>
-        </nav>
+<div id="screen-home" class="screen active">
+  <header class="bar">
+    <button class="profile" data-nav="profile">
+      <span class="ava" data-bind="avatar">?</span>
+      <span class="meta"><b data-bind="name">بازیکن</b><i>آنلاین</i></span>
+    </button>
+    <div class="bar-actions">
+      <button class="chip" data-action="toggle-theme"><span data-bind="theme-icon">☾</span></button>
+      <button class="chip gold" data-nav="profile">◆ <span data-bind="coins">0</span></button>
     </div>
-    <div id="screen-leaderboard" class="screen">
-        <div class="topbar">
-            <button class="back-btn" onclick="App.go('home')">→</button>
-            <div style="flex:1;text-align:center;font-size:16px;font-weight:900">🏆 رتبه‌بندی</div>
-            <div style="width:38px"></div>
-        </div>
-        <div class="lb-filters" id="lb-filters"></div>
-        <div class="lb-list" id="lb-list"></div>
-    </div>
-    <div id="screen-profile" class="screen">
-        <div class="topbar">
-            <button class="back-btn" onclick="App.go('home')">→</button>
-            <div style="flex:1;text-align:center;font-size:16px;font-weight:900">👤 پروفایل</div>
-            <div style="width:38px"></div>
-        </div>
-        <div class="profile-card">
-            <div class="avatar big-avatar" id="prof-avatar">?</div>
-            <div style="font-size:18px;font-weight:900" id="prof-name">بازیکن</div>
-            <div class="profile-stats">
-                <div class="stat-item"><div class="s-val" id="prof-games">0</div><div class="s-lbl">بازی</div></div>
-                <div class="stat-item"><div class="s-val" id="prof-best">0</div><div class="s-lbl">رکورد</div></div>
-                <div class="stat-item"><div class="s-val" id="prof-coins">0</div><div class="s-lbl">سکه</div></div>
-            </div>
-        </div>
-        <div class="content-box">
-            <h3>✏️ تغییر نام کاربری</h3>
-            <input type="text" id="username-input" class="input-box" placeholder="نام جدید..." maxlength="15">
-            <button class="btn btn-primary" onclick="App.saveUsername()" style="margin-top:10px">ذخیره نام</button>
-        </div>
-        <div class="content-box">
-            <h3>🎮 رکوردها</h3>
-            <div id="profile-games-list"></div>
-        </div>
-    </div>
-    <div id="screen-settings" class="screen">
-        <div class="topbar">
-            <button class="back-btn" onclick="App.go('home')">→</button>
-            <div style="flex:1;text-align:center;font-size:16px;font-weight:900">⚙️ تنظیمات</div>
-            <div style="width:38px"></div>
-        </div>
-        <div class="settings-card">
-            <div class="setting-row">
-                <div class="setting-label">صدای بازی</div>
-                <div class="toggle" id="toggle-sound" onclick="App.toggleSetting('sound')"></div>
-            </div>
-            <div class="setting-row">
-                <div class="setting-label">لرزش</div>
-                <div class="toggle" id="toggle-haptics" onclick="App.toggleSetting('haptics')"></div>
-            </div>
-        </div>
-        <div class="content-box" style="text-align:center">
-            <button class="btn btn-danger" onclick="App.resetProgress()">حذف همه پیشرفت</button>
-        </div>
-    </div>
-    <div id="screen-about" class="screen">
-        <div class="topbar">
-            <button class="back-btn" onclick="App.go('home')">→</button>
-            <div style="flex:1;text-align:center;font-size:16px;font-weight:900">ℹ️ درباره ما</div>
-            <div style="width:38px"></div>
-        </div>
-        <div class="content-box" style="text-align:center;">
-            <h2 style="color:var(--primary); margin-bottom:10px;">Nexus Arcade</h2>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">تیم توسعه مستقل برای ایجاد سرگرمی در سروش پلاس و تلگرام.</p>
-            <div style="text-align:right; background:var(--panel); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid var(--border);">
-                <b style="color:var(--text-main);">توسعه‌دهنده:</b> <a href="https://splus.ir/none313" target="_blank" style="color:var(--primary); text-decoration:none;">@none313</a>
-            </div>
-            <div style="text-align:right; background:var(--panel); padding:15px; border-radius:12px; border:1px solid var(--border);">
-                <b style="color:var(--text-main);">مدیریت:</b> <a href="https://splus.ir/fiioz" target="_blank" style="color:var(--primary); text-decoration:none;">@fiioz</a>
-            </div>
-        </div>
-    </div>
-    <div id="screen-game-info" class="screen">
-        <div class="topbar">
-            <button class="back-btn" onclick="App.go('home')">→</button>
-            <div style="flex:1;text-align:center;font-size:16px;font-weight:900" id="info-title">نام بازی</div>
-            <div style="width:38px"></div>
-        </div>
-        <div class="content-box" style="margin-top:20px; text-align:center;">
-            <div style="font-size:60px; margin-bottom:15px;" id="info-icon">🎮</div>
-            <h3 id="info-desc" style="font-size:14px; color:var(--text-main); line-height:1.8; margin-bottom:20px;"></h3>
-            
-            <button class="btn btn-primary" onclick="App.playCurrentGame()">▶️ شروع بازی</button>
-            
-            <button class="btn btn-secondary" onclick="App.showGameAbout()">📖 درباره و نحوه بازی</button>
-            <button class="btn btn-secondary" onclick="App.showGameLeaderboard()">🏆 جدول امتیازات</button>
-        </div>
-        <div class="content-box" id="game-info-extra" style="display:none;"></div>
-    </div>
-
-    <!-- صفحه اجرای بازی -->
-    <div id="screen-game" class="screen no-nav">
-        <div class="game-top">
-            <button class="back-btn" onclick="App.quitGame()">→</button>
-            <div class="gt-title" id="game-title">بازی</div>
-            <div style="width:38px"></div>
-        </div>
-        <canvas id="game-canvas"></canvas>
-        <div class="hud" id="game-hud"></div>
-        <div class="overlay" id="game-overlay"></div>
-        
-        <!-- کنترلر اختصاصی بازی مار (در صورت نیاز نمایش داده می‌شود) -->
-        <div class="d-pad" id="snake-dpad" style="display:none;">
-            <div class="d-pad-row"><button class="d-btn" onclick="App.snakeControl('up')">▲</button></div>
-            <div class="d-pad-row">
-                <button class="d-btn" onclick="App.snakeControl('left')">◀</button>
-                <button class="d-btn" onclick="App.snakeControl('down')">▼</button>
-                <button class="d-btn" onclick="App.snakeControl('right')">▶</button>
-            </div>
-        </div>
-    </div>
+  </header>
+  <div class="hero"><h1>NEXUS ARCADE</h1><p>بازی، تمرکز، رقابت</p></div>
+  <div class="cats" data-bind="categories"></div>
+  <div class="title-row"><h2 data-bind="section-title">همه بازی‌ها</h2></div>
+  <div class="list" data-bind="games"></div>
+  <nav class="nav">
+    <button data-nav="home" class="on">خانه</button>
+    <button data-nav="leaderboard">رتبه‌بندی</button>
+    <button data-nav="profile">پروفایل</button>
+    <button data-nav="settings">تنظیمات</button>
+    <button data-nav="about">درباره</button>
+  </nav>
 </div>
 
-<div id="toast"></div>
+<div id="screen-leaderboard" class="screen">
+  <header class="bar"><button class="back" data-nav="home">→</button><h3>رتبه‌بندی</h3><span></span></header>
+  <div class="cats" data-bind="lb-filters"></div>
+  <div class="list" data-bind="lb-list"></div>
+</div>
+
+<div id="screen-profile" class="screen">
+  <header class="bar"><button class="back" data-nav="home">→</button><h3>پروفایل</h3><span></span></header>
+  <div class="card center">
+    <span class="ava big" data-bind="avatar">?</span>
+    <h3 data-bind="name">بازیکن</h3>
+    <div class="stats">
+      <div><b data-bind="games-count">0</b><i>بازی</i></div>
+      <div><b data-bind="best">0</b><i>رکورد</i></div>
+      <div><b data-bind="coins">0</b><i>سکه</i></div>
+    </div>
+  </div>
+  <div class="card">
+    <h4>نام نمایشی</h4>
+    <input type="text" id="username-field" maxlength="15">
+    <button class="btn" data-action="save-name">ذخیره</button>
+  </div>
+  <div class="card"><h4>رکوردها</h4><div data-bind="profile-records"></div></div>
+</div>
+
+<div id="screen-settings" class="screen">
+  <header class="bar"><button class="back" data-nav="home">→</button><h3>تنظیمات</h3><span></span></header>
+  <div class="card">
+    <div class="row"><span>صدا</span><button class="switch" data-toggle="sound"></button></div>
+    <div class="row"><span>لرزش</span><button class="switch" data-toggle="haptics"></button></div>
+  </div>
+  <div class="card"><button class="btn danger" data-action="reset">حذف داده‌ها</button></div>
+</div>
+
+<div id="screen-about" class="screen">
+  <header class="bar"><button class="back" data-nav="home">→</button><h3>درباره ما</h3><span></span></header>
+  <div class="card"><h3>Nexus Arcade</h3><p>مجموعه‌ای از بازی‌های سبک، سریع و رقابتی.</p></div>
+  <div class="card">
+    <h4>توسعه</h4>
+    <a href="https://splus.ir/none313" target="_blank">@none313</a>
+    <h4 style="margin-top:14px">مدیریت</h4>
+    <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a>
+  </div>
+</div>
+
+<div id="screen-lobby" class="screen">
+  <header class="bar"><button class="back" data-nav="home">→</button><h3 data-bind="lobby-title">بازی</h3><span></span></header>
+  <div class="card center">
+    <div class="lobby-icon" data-bind="lobby-icon">🎮</div>
+    <h2 data-bind="lobby-name">بازی</h2>
+    <p data-bind="lobby-desc"></p>
+  </div>
+  <div class="card actions">
+    <button class="btn primary" data-action="play">شروع بازی</button>
+    <button class="btn" data-action="about-game">درباره و نحوه بازی</button>
+    <button class="btn" data-action="game-lb">جدول امتیازات</button>
+    <button class="btn ghost" data-nav="home">بازگشت</button>
+  </div>
+  <div class="card" data-bind="lobby-extra"></div>
+</div>
+
+<div id="screen-play" class="screen no-nav">
+  <header class="bar"><button class="back" data-action="quit">→</button><h3 data-bind="play-title">بازی</h3><span></span></header>
+  <canvas id="game-canvas"></canvas>
+  <div class="hud" data-bind="hud"></div>
+  <div class="overlay" data-bind="game-overlay"></div>
+  <div class="dpad" data-bind="dpad" hidden>
+    <button data-dir="up">▲</button>
+    <div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>
+  </div>
+</div>
+</div>
+
+<div id="toast" data-bind="toast"></div>
 <script src="firebase-config.js"></script>
-<script src="boot.js"></script>
+<script src="boot.js" type="module"></script>
 </body>
 </html>
