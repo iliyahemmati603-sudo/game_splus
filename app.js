@@ -4,7 +4,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const bind = k => $$(`[data-bind="${k}"]`);
-const BAD_WORDS = ['کص','کس','مم','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];
+const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];
 const REGISTRY_MAP = new Map();
 
 const state = { tab: 'home', cat: 'all', lobby: null, lbFilter: 'global', game: null, gameId: null, raf: 0, last: 0, hasChangedName: localStorage.getItem('nexus-name-changed') === 'true' };
@@ -126,12 +126,29 @@ const lobbyLeaderboard = async () => {
 
 const playGame = () => {
   const m = state.lobby; 
-  if (!m) return;
-  const Ctor = window['Game_' + m.id];
-  if (typeof Ctor !== 'function') return toast('بازی بارگذاری نشد');
+  if (!m) {
+      console.error('❌ خطا: شیء lobby خالی است.');
+      return;
+  }
   
-  state.gameId = m.id; 
-  state.game = new Ctor();
+  console.log(`🎮 تلاش برای شروع بازی: ${m.id}`);
+  
+  const Ctor = window['Game_' + m.id];
+  if (typeof Ctor !== 'function') {
+    console.error(`❌ خطا: کلاس Game_${m.id} در حافظه وجود ندارد. فایل pack مربوطه لود نشده است.`);
+    toast('بازی بارگذاری نشد');
+    return;
+  }
+  
+  try {
+      state.gameId = m.id; 
+      state.game = new Ctor();
+      console.log(`✅ کلاس بازی ساخته شد.`);
+  } catch (e) {
+      console.error(`❌ خطا در ساخت کلاس بازی:`, e);
+      toast('خطا در ساخت بازی');
+      return;
+  }
   
   bind('play-title').forEach(el => el.textContent = m.fa);
   bind('hud')[0].innerHTML = '';
@@ -145,13 +162,16 @@ const playGame = () => {
   if (state.game.resize) state.game.resize();
   
   try { 
+    console.log(`▶️ اجرای متد شروع بازی...`);
     if (typeof state.game.startGame === 'function') {
         state.game.startGame();
     } else if (typeof state.game.start === 'function') {
         state.game.start();
+    } else {
+        console.error(`❌ هیچ متد شروع (startGame یا start) در این بازی وجود ندارد.`);
     }
   } catch (e) { 
-    console.error(e); 
+    console.error(`❌ خطای مهلک در متد شروع بازی:`, e); 
     toast('خطا در شروع بازی'); 
     return go('home'); 
   }
@@ -169,7 +189,7 @@ const loop = now => {
     state.game.update(dt); 
     state.game.render(); 
   } catch (e) { 
-    console.error(e); 
+    console.error(`❌ خطا در حلقه اصلی بازی (update/render):`, e); 
     return go('home'); 
   }
   state.raf = requestAnimationFrame(loop);
@@ -222,6 +242,7 @@ const init = () => {
   window.GAME_REGISTRY.forEach(g => REGISTRY_MAP.set(g.id, g));
   drawProfile(); drawCategories(); drawGames(); syncSettings();
   document.addEventListener('click', delegate); AudioEngine.resume?.(); go('home');
+  console.log('✅ سیستم مدیریت (app.js) آماده به کار است.');
 };
 
 window.App = {
