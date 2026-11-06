@@ -1,16 +1,56 @@
 'use strict';
+
 (() => {
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const bind = k => $$(`[data-bind="${k}"]`);
-const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','fuck','pussy','sex','porn','bitch'];
+const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];  
 const REGISTRY_MAP = new Map();
-const state = { tab: 'home', cat: 'all', lobby: null, lbFilter: 'global', game: null, gameId: null, raf: 0, last: 0, hasChangedName: localStorage.getItem('nexus-name-changed') === 'true' };
 
-const setScreen = id => { $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + id)); $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === id)); state.tab = id; };
-const go = id => { if (state.tab === 'play' && id !== 'play') quit(); setScreen(id); if (id === 'leaderboard') drawLeaderboard(); if (id === 'profile') drawProfile(); };
-const toast = msg => { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 2200); };
-const theme = { get: () => localStorage.getItem('nexus-theme') || 'dark', set: v => { localStorage.setItem('nexus-theme', v); theme.apply(); }, apply: () => { const t = theme.get(); document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark'; bind('theme-icon').forEach(el => el.textContent = t === 'light' ? '☀' : '☾'); }, toggle: () => theme.set(theme.get() === 'light' ? 'dark' : 'light') };
+const state = {
+  tab: 'home',
+  cat: 'all',
+  lobby: null,
+  lbFilter: 'global',
+  game: null,
+  gameId: null,
+  raf: 0,
+  last: 0,
+  hasChangedName: localStorage.getItem('nexus-name-changed') === 'true'
+};
+
+const setScreen = id => {
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + id));
+  $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === id));
+  state.tab = id;
+};
+
+const go = id => {
+  if (state.tab === 'play' && id !== 'play') quit();
+  setScreen(id);
+  if (id === 'leaderboard') drawLeaderboard();
+  if (id === 'profile') drawProfile();
+};
+
+const toast = msg => {
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('on'), 2200);
+};
+
+const theme = {
+  get: () => localStorage.getItem('nexus-theme') || 'dark',
+  set: v => { localStorage.setItem('nexus-theme', v); theme.apply(); },
+  apply: () => {
+    const t = theme.get();
+    document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
+    bind('theme-icon').forEach(el => el.textContent = t === 'light' ? '☀' : '☾');
+  },
+  toggle: () => theme.set(theme.get() === 'light' ? 'dark' : 'light')
+};
 
 const drawProfile = () => {
   const d = Storage.data;
@@ -26,22 +66,29 @@ const drawProfile = () => {
     rec.innerHTML = items.length ? items.join('') : '<p style="text-align:center;font-size:12px">هنوز رکوردی ثبت نشده</p>';
   }
 };
+
 const saveName = () => {
-  const clean = $('#username-field').value.trim().replace(/[<>&"']/g, '');
+  const inp = $('#username-field');
+  if (!inp) return;
+  const clean = inp.value.trim().replace(/[<>&"']/g, '');
   if (clean.length < 3 || clean.length > 15) return toast('نام باید ۳ تا ۱۵ کاراکتر باشد');
   if (BAD_WORDS.some(w => clean.toLowerCase().includes(w))) return toast('این نام مجاز نیست');
   if (state.hasChangedName) return toast('شما قبلاً نام خود را تغییر داده‌اید');
   if (clean === Storage.data.name) return toast('نام جدید با نام فعلی یکسان است');
   Storage.data.name = clean; localStorage.setItem('nexus-name-changed', 'true'); state.hasChangedName = true; Storage.save(); drawProfile(); toast('نام ذخیره شد ✅');
 };
+
 const drawCategories = () => {
   const box = bind('categories')[0];
+  if (!box) return;
   const counts = new Map(); counts.set('all', window.GAME_REGISTRY.length);
   window.GAME_REGISTRY.forEach(g => counts.set(g.cat, (counts.get(g.cat) || 0) + 1));
   box.innerHTML = window.CATEGORIES.map(c => `<button class="cat ${c.id === state.cat ? 'on' : ''}" data-cat="${c.id}">${c.icon} ${c.name} · ${counts.get(c.id) || 0}</button>`).join('');
 };
+
 const drawGames = () => {
   const box = bind('games')[0];
+  if (!box) return;
   const list = state.cat === 'all' ? window.GAME_REGISTRY : window.GAME_REGISTRY.filter(g => g.cat === state.cat);
   bind('section-title').forEach(el => el.textContent = `همه بازی‌ها · ${list.length}`);
   box.innerHTML = list.map(g => {
@@ -49,6 +96,7 @@ const drawGames = () => {
     return `<div class="item" data-game="${g.id}"><span class="item-icon">${g.icon}</span><div class="item-body"><div class="item-name">${g.fa}</div><div class="item-en">${g.en}</div><div class="item-desc">${g.desc}</div>${best ? `<span class="item-best">رکورد: ${best}</span>` : ''}</div></div>`;
   }).join('');
 };
+
 const drawLobby = id => {
   const meta = REGISTRY_MAP.get(id); if (!meta) return go('home');
   state.lobby = meta;
@@ -59,7 +107,9 @@ const drawLobby = id => {
   bind('lobby-extra')[0].innerHTML = '';
   go('lobby');
 };
+
 const lobbyAbout = () => { const m = state.lobby; if (!m) return; bind('lobby-extra')[0].innerHTML = `<h4>📖 نحوه بازی</h4><p>${m.desc}. هدف شکستن رکورد ${Storage.data.best[m.id] || 0} است.</p>`; };
+
 const lobbyLeaderboard = async () => {
   const m = state.lobby; if (!m) return;
   const box = bind('lobby-extra')[0];
@@ -68,33 +118,62 @@ const lobbyLeaderboard = async () => {
   if (!list.length) return box.innerHTML += '<p style="text-align:center">هنوز رکوردی ثبت نشده</p>';
   box.innerHTML += list.slice(0, 5).map((e, i) => `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:var(--muted)">${i + 1}. ${e.name}</span><b style="color:var(--accent)">${e.score}</b></div>`).join('');
 };
+
 const playGame = () => {
   const m = state.lobby; if (!m) return;
   const Ctor = window['Game_' + m.id];
   if (typeof Ctor !== 'function') return toast('بازی بارگذاری نشد');
+  
   state.gameId = m.id; state.game = new Ctor();
   bind('play-title').forEach(el => el.textContent = m.fa);
   bind('hud')[0].innerHTML = '';
   $('#game-overlay').classList.remove('on');
-  bind('dpad')[0].hidden = !['snake'].includes(m.id);
-  setScreen('play'); $('#game-canvas').classList.add('on');
-  try { state.game.start(); } catch (e) { console.error(e); return quit(); }
-  state.last = performance.now(); loop(state.last); AudioEngine.resume?.();
+  
+  const dpad = bind('dpad')[0];
+  if (dpad) dpad.hidden = !['snake'].includes(m.id);
+  
+  setScreen('play'); 
+  $('#game-canvas').classList.add('on');
+  
+  if (state.game.resize) state.game.resize();
+  
+  try { 
+    state.game.start(); 
+  } catch (e) { 
+    console.error(e); 
+    return quit(); 
+  }
+  
+  state.last = performance.now(); 
+  loop(state.last); 
+  AudioEngine.resume?.();
 };
+
 const loop = now => {
   if (!state.game) return;
-  const dt = Math.min(0.05, (now - state.last) / 1000); state.last = now;
-  try { state.game.update(dt); state.game.render(); } catch (e) { console.error(e); return quit(); }
+  const dt = Math.min(0.05, (now - state.last) / 1000); 
+  state.last = now;
+  try { 
+    state.game.update(dt); 
+    state.game.render(); 
+  } catch (e) { 
+    console.error(e); 
+    return quit(); 
+  }
   state.raf = requestAnimationFrame(loop);
 };
+
 const quit = () => {
   try { state.game?.stop?.(); } catch {}
   cancelAnimationFrame(state.raf); state.raf = 0; state.game = null;
   $('#game-canvas').classList.remove('on'); $('#game-overlay').classList.remove('on');
-  bind('dpad')[0].hidden = true;
+  const dpad = bind('dpad')[0];
+  if (dpad) dpad.hidden = true;
   const ctx = $('#game-canvas').getContext('2d'); ctx.clearRect(0, 0, $('#game-canvas').width, $('#game-canvas').height);
-  state.lobby = null; go('home');
+  state.lobby = null; 
+  go('home');
 };
+
 const drawLeaderboard = async () => {
   const isGlobal = state.lbFilter === 'global';
   bind('lb-filters')[0].innerHTML = `<button class="cat ${isGlobal ? 'on' : ''}" data-lb="global">🌟 رتبه کل</button>` + window.GAME_REGISTRY.map(g => `<button class="cat ${g.id === state.lbFilter ? 'on' : ''}" data-lb="${g.id}">${g.icon} ${g.fa}</button>`).join('');
@@ -108,7 +187,20 @@ const drawLeaderboard = async () => {
     return `<div class="item"><div class="item-body" style="flex-direction:row;align-items:center;gap:10px"><div style="font-size:18px;width:28px;text-align:center">${medal}</div><div class="item-name" style="margin:0;font-size:15px">${e.name}</div></div><b style="color:var(--accent);font-size:16px">${val}</b></div>`;
   }).join('');
 };
-const handleAction = a => { const map = { 'toggle-theme': theme.toggle, 'save-name': saveName, 'reset': () => { if (confirm('حذف شود؟')) { localStorage.removeItem(Storage.key); localStorage.removeItem('nexus-name-changed'); location.reload(); } }, 'play': playGame, 'about-game': lobbyAbout, 'game-lb': lobbyLeaderboard, 'quit': quit }; map[a]?.(); };
+
+const handleAction = a => { 
+  const map = { 
+    'toggle-theme': theme.toggle, 
+    'save-name': saveName, 
+    'reset': () => { if (confirm('حذف شود؟')) { localStorage.removeItem(Storage.key); localStorage.removeItem('nexus-name-changed'); location.reload(); } }, 
+    'play': playGame, 
+    'about-game': lobbyAbout, 
+    'game-lb': lobbyLeaderboard, 
+    'quit': quit 
+  }; 
+  if (map[a]) map[a](); 
+};
+
 const delegate = e => {
   const nav = e.target.closest('[data-nav]'); if (nav) { e.preventDefault(); return go(nav.dataset.nav); }
   const act = e.target.closest('[data-action]'); if (act) { e.preventDefault(); return handleAction(act.dataset.action); }
@@ -118,13 +210,16 @@ const delegate = e => {
   const t = e.target.closest('[data-toggle]'); if (t) { const k = t.dataset.toggle; Storage.data.settings[k] = !Storage.data.settings[k]; Storage.save(); if (k === 'sound') AudioEngine.enabled = Storage.data.settings.sound; if (k === 'haptics') Haptics.enabled = Storage.data.settings.haptics; syncSettings(); return; }
   const dir = e.target.closest('[data-dir]'); if (dir && state.gameId === 'snake') state.game?.setDirection?.(dir.dataset.dir);
 };
+
 const syncSettings = () => { ['sound', 'haptics'].forEach(k => $$(`[data-toggle="${k}"]`).forEach(el => el.classList.toggle('on', Storage.data.settings[k]))); };
+
 const init = () => {
   theme.apply(); Storage.load(); Net.init();
   window.GAME_REGISTRY.forEach(g => REGISTRY_MAP.set(g.id, g));
   drawProfile(); drawCategories(); drawGames(); syncSettings();
   document.addEventListener('click', delegate); AudioEngine.resume?.(); go('home');
 };
+
 window.App = {
   gameOver: (id, score, extras) => {
     cancelAnimationFrame(state.raf); state.raf = 0;
@@ -144,5 +239,6 @@ window.App = {
   quit,
   setDirection: d => state.game?.setDirection?.(d)
 };
+
 window.Nexus = { init };
 })();
