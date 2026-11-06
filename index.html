@@ -8,7 +8,6 @@
 </head>
 <body>
 <div id="boot"><div class="boot-mark">NEXUS</div><div class="boot-bar"><span></span></div></div>
-
 <div id="app">
   <div id="screen-home" class="screen active">
     <header class="bar">
@@ -26,13 +25,11 @@
     <div class="title-row"><h2 data-bind="section-title">همه بازی‌ها</h2></div>
     <div class="list" data-bind="games"></div>
   </div>
-
   <div id="screen-leaderboard" class="screen">
     <header class="bar"><h3>🏆 جدول امتیازات</h3><span></span></header>
     <div class="cats" data-bind="lb-filters"></div>
     <div class="list" data-bind="lb-list"></div>
   </div>
-
   <div id="screen-profile" class="screen">
     <header class="bar"><h3>👤 پروفایل</h3><span></span></header>
     <div class="card center">
@@ -51,16 +48,14 @@
     </div>
     <div class="card"><h4>📊 رکوردهای شما</h4><div data-bind="profile-records"></div></div>
   </div>
-
   <div id="screen-settings" class="screen">
     <header class="bar"><h3>⚙️ تنظیمات</h3><span></span></header>
     <div class="card">
       <div class="row"><span>🔊 صدای بازی</span><button class="switch" data-toggle="sound"></button></div>
-      <div class="row"><span>📳 لرزش (Haptics)</span><button class="switch" data-toggle="haptics"></button></div>
+      <div class="row"><span>📳 لرزش</span><button class="switch" data-toggle="haptics"></button></div>
     </div>
     <div class="card"><button class="btn danger" data-action="reset">⚠️ حذف تمام داده‌ها</button></div>
   </div>
-
   <div id="screen-about" class="screen">
     <header class="bar"><h3>ℹ️ درباره ما</h3><span></span></header>
     <div class="card center">
@@ -70,11 +65,10 @@
     </div>
     <div class="card">
       <h4>👨‍💻 تیم توسعه</h4>
-      <p style="margin-bottom:5px;"><b>سازنده:</b> <a href="https://splus.ir/none313" target="_blank">@none313</a></p>
+      <p><b>سازنده:</b> <a href="https://splus.ir/none313" target="_blank">@none313</a></p>
       <p><b>مدیریت:</b> <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a></p>
     </div>
   </div>
-
   <div id="screen-lobby" class="screen">
     <header class="bar"><button class="back" data-nav="home">→</button><h3 data-bind="lobby-title">بازی</h3><span></span></header>
     <div class="card center">
@@ -85,12 +79,11 @@
     <div class="card actions">
       <button class="btn primary" data-action="play">▶️ شروع بازی</button>
       <button class="btn" data-action="about-game">📖 درباره و نحوه بازی</button>
-      <button class="btn" data-action="game-lb">🏆 جدول امتیازات این بازی</button>
+      <button class="btn" data-action="game-lb">🏆 جدول امتیازات</button>
       <button class="btn ghost" data-nav="home">بازگشت</button>
     </div>
     <div class="card" data-bind="lobby-extra"></div>
   </div>
-
   <div id="screen-play" class="screen no-nav">
     <header class="bar"><button class="back" data-action="quit">→</button><h3 data-bind="play-title">بازی</h3><span></span></header>
     <canvas id="game-canvas"></canvas>
@@ -101,7 +94,6 @@
       <div><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>
     </div>
   </div>
-
   <nav class="nav">
     <button data-nav="home" class="on">🏠<br>خانه</button>
     <button data-nav="leaderboard">🏆<br>رتبه‌بندی</button>
@@ -110,7 +102,6 @@
     <button data-nav="about">ℹ️<br>درباره</button>
   </nav>
 </div>
-
 <div id="toast" data-bind="toast"></div>
 <script src="firebase-config.js"></script>
 <script src="boot.js"></script>
