@@ -1,39 +1,25 @@
-const load = src => new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = './' + src;
-    script.async = false;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error(src));
-    document.head.appendChild(script);
+const load = src => new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = './' + src;
+  s.async = false;
+  s.onload = res;
+  s.onerror = () => rej(new Error(src));
+  document.head.appendChild(s);
 });
-
 const init = async () => {
-    try {
-        await load('platform.js');
-        await load('registry.js');
-        await load('games-bundle.js');
-        await load('app.js');
-
-        if (typeof window.Nexus?.init === 'function') {
-            window.Nexus.init();
-        }
-    } catch (error) {
-        console.error('Load Error:', error.message);
-        document.body.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#05070d;color:#eef2ff;text-align:center;padding:20px;direction:rtl;">
-                <h2 style="color:#ff2d78;margin-bottom:20px;font-size:24px;">⛔️ خطای بارگذاری فایل</h2>
-                <p style="font-size:16px;color:#fff;margin-bottom:15px;">فایل زیر در گیت‌هاب پیدا نشد:</p>
-                <div style="background:#1e293b;padding:15px 25px;border-radius:10px;font-family:monospace;font-size:18px;color:#00e5ff;letter-spacing:1px;border:1px solid #334155;">
-                    ${error.message}
-                </div>
-                <p style="font-size:14px;color:#94a3b8;margin-top:25px;max-width:400px;line-height:1.6;">
-                    لطفاً مطمئن شوید این فایل دقیقاً با همین نام و در <b>همان پوشه‌ای که index.html قرار دارد</b> آپلود شده است.
-                </p>
-                <button onclick="location.reload()" style="margin-top:30px;padding:12px 30px;border-radius:12px;border:none;background:#00e5ff;color:#000;font-weight:bold;font-size:16px;cursor:pointer;">رفرش صفحه</button>
-            </div>`;
-    }
+  try {
+    await load('platform.js');
+    await load('registry.js');
+    const packs = ['pack-01','pack-02','pack-03','pack-04','pack-05','pack-06','pack-07'];
+    for (const p of packs) await load(`games/${p}.js`);
+    await load('app.js');
+    window.Nexus?.init?.();
+  } catch (e) {
+    console.error('[boot]', e);
+    document.body.innerHTML = `<div style="padding:40px;text-align:center;font-family:sans-serif;background:#05070d;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column"><h2 style="color:#ff2d78">خطا در بارگذاری</h2><p dir="ltr" style="font-family:monospace;color:#00e5ff;background:#1e293b;padding:10px 20px;border-radius:8px">${e.message}</p></div>`;
+    return;
+  }
+  const b = document.getElementById('boot');
+  if (b) { b.classList.add('hide'); setTimeout(() => b.remove(), 320); }
 };
-
-document.readyState === 'loading'
-    ? document.addEventListener('DOMContentLoaded', init)
-    : init();
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
