@@ -1,9 +1,10 @@
 'use strict';
+
 (() => {
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const bind = k => $$(`[data-bind="${k}"]`);
-const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','fuck','pussy','sex','porn','bitch'];
+const BAD_WORDS = ['کص','کیر','کون','جنده','حروم','کس','ننه','کسننت','مادر','سگ','خار','fuck','pussy','sex','porn','bitch'];
 const REGISTRY_MAP = new Map();
 
 const state = {
