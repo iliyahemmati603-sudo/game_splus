@@ -1,5 +1,4 @@
 'use strict';
-
 (() => {
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -14,7 +13,8 @@ const state = {
   game: null,
   gameId: null,
   raf: 0,
-  last: 0
+  last: 0,
+  hasChangedName: localStorage.getItem('nexus-name-changed') === 'true'
 };
 const setScreen = id => {
   $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + id));
@@ -62,14 +62,21 @@ const drawProfile = () => {
   }
 };
 const saveName = () => {
-  const raw = $('#username-field').value.trim();
+  const input = $('#username-field');
+  const raw = input.value.trim();
   const clean = raw.replace(/[<>&"']/g, '');
   if (clean.length < 3 || clean.length > 15) return toast('نام باید ۳ تا ۱۵ کاراکتر باشد');
   if (BAD_WORDS.some(w => clean.toLowerCase().includes(w))) return toast('این نام مجاز نیست');
+  if (state.hasChangedName) {
+    return toast('شما قبلاً نام خود را تغییر داده‌اید و امکان تغییر مجدد وجود ندارد.');
+  }
+  if (clean === Storage.data.name) return toast('نام جدید با نام فعلی یکسان است');
   Storage.data.name = clean;
+  localStorage.setItem('nexus-name-changed', 'true');
+  state.hasChangedName = true;
   Storage.save();
   drawProfile();
-  toast('نام ذخیره شد');
+  toast('نام با موفقیت ذخیره شد ✅');
 };
 const drawCategories = () => {
   const box = bind('categories')[0];
@@ -185,7 +192,7 @@ const handleAction = action => {
   const map = {
     'toggle-theme': theme.toggle,
     'save-name': saveName,
-    'reset': () => { if (confirm('حذف شود؟')) { localStorage.removeItem(Storage.key); location.reload(); } },
+    'reset': () => { if (confirm('حذف شود؟')) { localStorage.removeItem(Storage.key); localStorage.removeItem('nexus-name-changed'); location.reload(); } },
     'play': playGame,
     'about-game': lobbyAbout,
     'game-lb': lobbyLeaderboard,
