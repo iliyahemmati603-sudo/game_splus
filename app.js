@@ -4,7 +4,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const bind = k => $$(`[data-bind="${k}"]`);
-const BAD_WORDS = ['کص','کس','ممه','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];
+const BAD_WORDS = ['کص','کس','مم','کیر','کون','جنده','حروم','کسننت','ناموس','ننه','خر','ننت','مادرت','خار','ادمین','پشتیبانی','ساپورت','fuck','pussy','sex','porn','bitch'];
 const REGISTRY_MAP = new Map();
 
 const state = { tab: 'home', cat: 'all', lobby: null, lbFilter: 'global', game: null, gameId: null, raf: 0, last: 0, hasChangedName: localStorage.getItem('nexus-name-changed') === 'true' };
