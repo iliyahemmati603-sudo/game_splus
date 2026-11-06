@@ -145,8 +145,11 @@ const playGame = () => {
   if (state.game.resize) state.game.resize();
   
   try { 
-    const startFn = state.game.start || state.game.startGame;
-    if (typeof startFn === 'function') startFn.call(state.game);
+    if (typeof state.game.startGame === 'function') {
+        state.game.startGame();
+    } else if (typeof state.game.start === 'function') {
+        state.game.start();
+    }
   } catch (e) { 
     console.error(e); 
     toast('خطا در شروع بازی'); 
