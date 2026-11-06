@@ -1,4 +1,5 @@
 'use strict';
+
 (() => {
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -228,15 +229,7 @@ const syncSettings = () => {
 const init = () => {
   theme.apply();
   Storage.load();
-  Net.init();
-  try {
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready(); tg.expand();
-      const u = tg.initDataUnsafe?.user;
-      if (u) { Storage.data.name = u.first_name || 'بازیکن'; Storage.data.uid = 'tg_' + u.id; Storage.save(); }
-    }
-  } catch {}
+  Net.init();  
   window.GAME_REGISTRY.forEach(g => REGISTRY_MAP.set(g.id, g));
   drawProfile();
   drawCategories();
