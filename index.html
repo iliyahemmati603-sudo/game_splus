@@ -53,8 +53,8 @@
   </div>
   <div class="card">
     <h4>نام نمایشی</h4>
-    <input type="text" id="username-field" maxlength="15">
-    <button class="btn" data-action="save-name">ذخیره</button>
+    <input type="text" id="username-field" maxlength="15" placeholder="نام جدید...">
+    <button class="btn primary" data-action="save-name">ذخیره نام</button>
   </div>
   <div class="card"><h4>رکوردها</h4><div data-bind="profile-records"></div></div>
 </div>
@@ -70,12 +70,16 @@
 
 <div id="screen-about" class="screen">
   <header class="bar"><button class="back" data-nav="home">→</button><h3>درباره ما</h3><span></span></header>
-  <div class="card"><h3>Nexus Arcade</h3><p>مجموعه‌ای از بازی‌های سبک، سریع و رقابتی.</p></div>
+  <div class="card center">
+    <div class="lobby-icon">🎮</div>
+    <h3>Nexus Arcade</h3>
+    <p>پلتفرم بازی‌های آنلاین با تمرکز بر سرعت، کیفیت و رقابت.</p>
+    <p style="margin-top:10px; font-size:12px; opacity:0.8;">ما مجموعه‌ای از بهترین بازی‌های سبک و مهارتی را برای شما گردآوری کرده‌ایم تا در هر زمان و مکانی بتوانید هیجان رقابت را تجربه کنید.</p>
+  </div>
   <div class="card">
-    <h4>توسعه</h4>
-    <a href="https://splus.ir/none313" target="_blank">@none313</a>
-    <h4 style="margin-top:14px">مدیریت</h4>
-    <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a>
+    <h4>👨‍💻 تیم توسعه</h4>
+    <p style="margin-bottom:5px;"><b>سازنده و توسعه‌دهنده:</b> <a href="https://splus.ir/none313" target="_blank" style="color:var(--accent); text-decoration:none;">@none313</a></p>
+    <p><b>مدیریت:</b> <a href="https://splus.ir/fiioz" target="_blank" style="color:var(--accent); text-decoration:none;">@fiioz</a></p>
   </div>
 </div>
 
