@@ -168,36 +168,7 @@ const App = (() => {
         }
     };
 
-    const Storage = {
-        key: 'nexus_arcade_v8',
-        data: { uid: null, name: 'بازیکن', coins: 0, gamesPlayed: 0, best: {}, totalBest: 0, settings: { sound: true, haptics: true } },
-        load() {
-            try {
-                const raw = localStorage.getItem(this.key);
-                if (raw) {
-                    const p = JSON.parse(raw);
-                    this.data = { ...this.data, ...p };
-                    this.data.settings = { ...this.data.settings, ...(p.settings || {}) };
-                }
-            } catch (e) {}
-            if (!this.data.uid) { this.data.uid = 'u_' + Math.random().toString(36).slice(2, 11); this.save(); }
-            if (window.AudioEngine) window.AudioEngine.enabled = this.data.settings.sound;
-            if (window.Haptics) window.Haptics.enabled = this.data.settings.haptics;
-        },
-        save() { try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch (e) {} },
-        addCoins(n) { this.data.coins = Math.max(0, this.data.coins + n); this.save(); },
-        setBest(id, s) {
-            const p = this.data.best[id] || 0;
-            if (s > p) {
-                this.data.best[id] = s;
-                this.data.totalBest = Object.values(this.data.best).reduce((a, b) => a + b, 0);
-                this.save();
-                return true;
-            }
-            return false;
-        },
-        incGames() { this.data.gamesPlayed++; this.save(); }
-    };
+    const Storage = window.Storage;
 
     const Profile = {
         render() {
