@@ -2,7 +2,11 @@
 
 window.onerror = function(msg, url, line, col, error) {
     if (msg.includes('Script error')) return;
-    console.error(`[Global Error] ${msg} at ${url}:${line}`);
+    const errDiv = document.getElementById('error-display');
+    if (errDiv) {
+        errDiv.style.display = 'block';
+        errDiv.textContent = `Error: ${msg} at ${url}:${line}`;
+    }
     return false;
 };
 
@@ -92,7 +96,7 @@ const App = (() => {
             State.game = new Ctor();
             const meta = RegistryMap.get(id);
             
-            bind('play-title').forEach(el => el.textContent = meta.fa);
+            if (meta) bind('play-title').forEach(el => el.textContent = meta.fa);
             bind('hud')[0].innerHTML = '';
             
             $('#game-overlay').classList.remove('active');
