@@ -1,5 +1,4 @@
 'use strict';
-
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -53,7 +52,7 @@ const AudioEngine = {
 const Haptics = { enabled: true, light() { if (this.enabled && navigator.vibrate) navigator.vibrate(8); }, medium() { if (this.enabled && navigator.vibrate) navigator.vibrate(20); }, heavy() { if (this.enabled && navigator.vibrate) navigator.vibrate([30, 20, 40]); }, success() { if (this.enabled && navigator.vibrate) navigator.vibrate([15, 30, 15]); } };
 
 const Storage = {
-    key: 'nexus_arcade_v9',
+    key: 'nexus_arcade_v11',
     data: { uid: null, name: 'بازیکن', coins: 0, gamesPlayed: 0, best: {}, totalBest: 0, settings: { sound: true, haptics: true } },
     load() {
         try {
@@ -91,7 +90,6 @@ const Net = {
         const uid = Storage.data.uid;
         const safeName = esc(name).slice(0, 20);
         const gameRef = this.db.ref(`leaderboards/${gameId}`);
-        
         return gameRef.orderByChild('uid').equalTo(uid).once('value').then(snap => {
             let existingKey = null, existingScore = 0;
             snap.forEach(c => { existingKey = c.key; existingScore = c.val().score || 0; });
@@ -146,7 +144,6 @@ const Input = {
         const onUp = () => { this.pointer.down = false; };
         const onKeyDown = e => { this.keys.add(e.key.toLowerCase()); };
         const onKeyUp = e => { this.keys.delete(e.key.toLowerCase()); };
-        
         c.addEventListener('pointerdown', onDown, { passive: false }); this._handlers.push({ t: c, e: 'pointerdown', f: onDown });
         c.addEventListener('pointermove', onMove, { passive: true }); this._handlers.push({ t: c, e: 'pointermove', f: onMove });
         window.addEventListener('pointerup', onUp); this._handlers.push({ t: window, e: 'pointerup', f: onUp });
@@ -169,23 +166,15 @@ class GameBase {
         this.ctx = this.canvas.getContext('2d');
         this.dpr = Math.min(window.devicePixelRatio || 1, 2);
         this.resize();
-        
         this.ro = new ResizeObserver(() => this.resize());
         this.ro.observe(this.canvas.parentElement);
-        
         this.onResize = null;
     }
     resize() {
-        const r = this.canvas.getBoundingClientRect();
-        const parent = this.canvas.parentElement;
-        const pRect = parent ? parent.getBoundingClientRect() : { width: 0, height: 0 };
-        
-        this.w = r.width || pRect.width || window.innerWidth || 360;
-        this.h = r.height || pRect.height || window.innerHeight || 640;
-        
-        this.w = Math.max(this.w, 10);
-        this.h = Math.max(this.h, 10);
-        
+        if (!this.canvas || !this.canvas.parentElement) return;
+        const r = this.canvas.parentElement.getBoundingClientRect();
+        this.w = r.width || window.innerWidth;
+        this.h = r.height || window.innerHeight;
         this.canvas.width = Math.round(this.w * this.dpr);
         this.canvas.height = Math.round(this.h * this.dpr);
         this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
