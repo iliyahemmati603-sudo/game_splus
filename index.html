@@ -149,7 +149,7 @@
     </section>
 
     <section id="screen-play" class="screen">
-        <header class="topbar">
+        <header class="topbar" style="position: relative; z-index: 100;">
             <button class="back-btn" data-action="quit">➔</button>
             <h2 class="screen-title" data-bind="play-title">بازی</h2>
             <div style="width:44px"></div>
@@ -162,7 +162,7 @@
         <div class="game-controls-panel" id="game-controls"></div>
     </section>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" id="bottom-nav">
         <button class="nav-item active" data-nav="home"><span class="nav-icon">🏠</span><span>خانه</span></button>
         <button class="nav-item" data-nav="leaderboard"><span class="nav-icon">🏆</span><span>رتبه‌بندی</span></button>
         <button class="nav-item" data-nav="profile"><span class="nav-icon">👤</span><span>پروفایل</span></button>
@@ -172,6 +172,9 @@
 </div>
 
 <div id="toast-container"></div>
+
+<div id="error-display" style="position: fixed; top: 0; left: 0; right: 0; background: #ff2d78; color: #fff; padding: 15px; font-family: monospace; font-size: 12px; text-align: center; z-index: 99999; display: none; direction: ltr;"></div>
+
 <script src="boot.js"></script>
 </body>
 </html>
