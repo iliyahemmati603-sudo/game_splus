@@ -27,6 +27,11 @@ const init = async () => {
         }
     } catch (e) {
         console.error('[Boot] Critical Failure:', e);
+        const errDiv = document.getElementById('error-display');
+        if (errDiv) {
+            errDiv.style.display = 'block';
+            errDiv.textContent = `Boot Error: ${e.message}`;
+        }
     } finally {
         const bootEl = document.getElementById('boot-screen');
         if (bootEl) {
