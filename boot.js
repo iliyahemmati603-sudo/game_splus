@@ -1,10 +1,13 @@
-const load = src => new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.async = false;
-    s.onload = res;
-    s.onerror = () => rej(new Error(`فایل پیدا نشد: ${src}`));
-    document.head.appendChild(s);
+const load = src => new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = src + '?t=' + Date.now();
+    script.async = false;
+    script.onload = resolve;
+    script.onerror = () => {
+        console.warn('[Boot] File not found:', src);
+        resolve();
+    };
+    document.head.appendChild(script);
 });
 
 const init = async () => {
@@ -18,15 +21,21 @@ const init = async () => {
         }
         
         await load('app.js');
-        window.Nexus?.init?.();
+        
+        if (window.Nexus && typeof window.Nexus.init === 'function') {
+            window.Nexus.init();
+        }
     } catch (e) {
-        console.error('[boot]', e);
-        document.body.innerHTML = `<div style="padding:40px;text-align:center;font-family:sans-serif;background:#05070d;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column"><h2 style="color:#ff2d78">خطا در بارگذاری فایل‌ها</h2><p dir="ltr" style="font-family:monospace;color:#00e5ff;background:#1e293b;padding:10px 20px;border-radius:8px">${e.message}</p><p style="font-size:14px;color:#6b7a99;margin-top:10px">لطفاً پوشه games و فایل‌های pack را چک کنید.</p></div>`;
-        return;
+        console.error('[Boot] Critical Failure:', e);
+    } finally {
+        const bootEl = document.getElementById('boot-screen');
+        if (bootEl) {
+            bootEl.classList.add('hidden');
+            setTimeout(() => bootEl.remove(), 300);
+        }
     }
-    
-    const b = document.getElementById('boot-screen');
-    if (b) { b.classList.add('hidden'); setTimeout(() => b.remove(), 320); }
 };
 
-document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+document.readyState === 'loading' 
+    ? document.addEventListener('DOMContentLoaded', init) 
+    : init();
