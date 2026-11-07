@@ -3,116 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
 <title>Nexus Arcade</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="boot"><div class="boot-mark">NEXUS</div><div class="boot-bar"><span></span></div></div>
 
-<div id="app">
-  <div id="screen-home" class="screen active">
-    <header class="bar">
-      <button class="profile" data-nav="profile">
-        <span class="ava" data-bind="avatar">?</span>
-        <span class="meta"><b data-bind="name">بازیکن</b><i>آنلاین</i></span>
-      </button>
-      <div class="bar-actions">
-        <button class="chip" data-action="toggle-theme"><span data-bind="theme-icon">☾</span></button>
-        <button class="chip gold" data-nav="profile">💎 <span data-bind="coins">0</span></button>
-      </div>
-    </header>
-    <div class="hero"><h1>NEXUS ARCADE</h1><p>بازی، تمرکز، رقابت</p></div>
-    <div class="cats" data-bind="categories"></div>
-    <div class="title-row"><h2 data-bind="section-title">همه بازی‌ها</h2></div>
-    <div class="list" data-bind="games"></div>
-  </div>
-
-  <div id="screen-leaderboard" class="screen">
-    <header class="bar"><h3>🏆 جدول امتیازات</h3><span></span></header>
-    <div class="cats" data-bind="lb-filters"></div>
-    <div class="list" data-bind="lb-list"></div>
-  </div>
-
-  <div id="screen-profile" class="screen">
-    <header class="bar"><h3>👤 پروفایل</h3><span></span></header>
-    <div class="card center">
-      <span class="ava big" data-bind="avatar">?</span>
-      <h3 data-bind="name">بازیکن</h3>
-      <div class="stats">
-        <div><b data-bind="games-count">0</b><i>بازی</i></div>
-        <div><b data-bind="best">0</b><i>رکورد</i></div>
-        <div><b data-bind="coins">0</b><i>سکه</i></div>
-      </div>
-    </div>
-    <div class="card">
-      <h4>✏️ نام نمایشی</h4>
-      <input type="text" id="username-field" maxlength="15" placeholder="نام جدید...">
-      <button class="btn primary" data-action="save-name">ذخیره نام</button>
-    </div>
-    <div class="card"><h4>📊 رکوردهای شما</h4><div data-bind="profile-records"></div></div>
-  </div>
-
-  <div id="screen-settings" class="screen">
-    <header class="bar"><h3>⚙️ تنظیمات</h3><span></span></header>
-    <div class="card">
-      <div class="row"><span>🔊 صدای بازی</span><button class="switch" data-toggle="sound"></button></div>
-      <div class="row"><span>📳 لرزش</span><button class="switch" data-toggle="haptics"></button></div>
-    </div>
-    <div class="card"><button class="btn danger" data-action="reset">⚠️ حذف تمام داده‌ها</button></div>
-  </div>
-
-  <div id="screen-about" class="screen">
-    <header class="bar"><h3>ℹ️ درباره ما</h3><span></span></header>
-    <div class="card center">
-      <div class="lobby-icon">🎮</div>
-      <h3>Nexus Arcade</h3>
-      <p>پلتفرم بازی‌های آنلاین با تمرکز بر سرعت، کیفیت و رقابت.</p>
-    </div>
-    <div class="card">
-      <h4>👨‍💻 تیم توسعه</h4>
-      <p><b>سازنده:</b> <a href="https://splus.ir/none313" target="_blank">@none313</a></p>
-      <p><b>مدیریت:</b> <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a></p>
-    </div>
-  </div>
-
-  <div id="screen-lobby" class="screen">
-    <header class="bar"><button class="back" data-nav="home">→</button><h3 data-bind="lobby-title">بازی</h3><span></span></header>
-    <div class="card center">
-      <div class="lobby-icon" data-bind="lobby-icon">🎮</div>
-      <h2 data-bind="lobby-name">بازی</h2>
-      <p data-bind="lobby-desc"></p>
-    </div>
-    <div class="card actions">
-      <button class="btn primary" data-action="play">▶️ شروع بازی</button>
-      <button class="btn" data-action="about-game">📖 درباره و نحوه بازی</button>
-      <button class="btn" data-action="game-lb">🏆 جدول امتیازات این بازی</button>
-      <button class="btn ghost" data-nav="home">بازگشت</button>
-    </div>
-    <div class="card" data-bind="lobby-extra"></div>
-  </div>
-
-  <div id="screen-play" class="screen no-nav">
-    <header class="bar"><button class="back" data-action="quit">→</button><h3 data-bind="play-title">بازی</h3><span></span></header>
-    
-    <div class="game-viewport" id="game-viewport">
-        <canvas id="game-canvas"></canvas>
-        <div class="hud" data-bind="hud"></div>
-        <div class="overlay" id="game-overlay"></div>
-    </div>
-    
-    <div class="controls-area" id="game-controls"></div>
-  </div>
-
-  <nav class="nav">
-    <button data-nav="home" class="on">🏠<br>خانه</button>
-    <button data-nav="leaderboard">🏆<br>رتبه‌بندی</button>
-    <button data-nav="profile">👤<br>پروفایل</button>
-    <button data-nav="settings">⚙️<br>تنظیمات</button>
-    <button data-nav="about">ℹ️<br>درباره</button>
-  </nav>
+<div id="boot-screen">
+    <div class="boot-logo">NEXUS</div>
+    <div class="boot-spinner"></div>
 </div>
 
-<div id="toast" data-bind="toast"></div>
+<div id="app" class="app-hidden">
+    <main id="screen-home" class="screen active">
+        <header class="topbar">
+            <div class="profile-mini" data-nav="profile">
+                <div class="avatar" data-bind="avatar">?</div>
+                <div class="user-meta">
+                    <span class="u-name" data-bind="name">کاربر</span>
+                    <span class="u-status">آنلاین</span>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <button class="icon-btn" data-action="toggle-theme"><span data-bind="theme-icon">🌙</span></button>
+                <div class="coin-badge" data-nav="profile">💎 <span data-bind="coins">0</span></div>
+            </div>
+        </header>
+        
+        <div class="hero-section">
+            <h1 class="hero-title">NEXUS ARCADE</h1>
+            <p class="hero-subtitle">بهترین‌ها را اینجا تجربه کن</p>
+        </div>
+
+        <div class="category-slider" data-bind="categories"></div>
+
+        <div class="list-header">
+            <h2 data-bind="section-title">همه بازی‌ها</h2>
+        </div>
+        <div class="game-grid" data-bind="games"></div>
+    </main>
+
+    <section id="screen-leaderboard" class="screen">
+        <header class="topbar">
+            <button class="back-btn" data-nav="home">➔</button>
+            <h2 class="screen-title">🏆 جدول رتبه‌بندی</h2>
+            <div style="width:44px"></div>
+        </header>
+        <div class="category-slider" data-bind="lb-filters"></div>
+        <div class="leaderboard-list" data-bind="lb-list"></div>
+    </section>
+
+    <section id="screen-profile" class="screen">
+        <header class="topbar">
+            <button class="back-btn" data-nav="home">➔</button>
+            <h2 class="screen-title">پروفایل کاربری</h2>
+            <div style="width:44px"></div>
+        </header>
+        <div class="profile-card-container">
+            <div class="avatar large" data-bind="avatar">?</div>
+            <h3 class="profile-name" data-bind="name">کاربر</h3>
+            <div class="stats-grid">
+                <div class="stat-box"><span class="stat-value" data-bind="games-count">0</span><span class="stat-label">بازی</span></div>
+                <div class="stat-box"><span class="stat-value" data-bind="best">0</span><span class="stat-label">مجموع رکورد</span></div>
+                <div class="stat-box"><span class="stat-value" data-bind="coins">0</span><span class="stat-label">سکه</span></div>
+            </div>
+        </div>
+        <div class="content-card">
+            <h4 class="card-title">تغییر نام</h4>
+            <div class="input-group">
+                <input type="text" id="username-input" placeholder="نام جدید..." maxlength="15">
+                <button class="btn primary" data-action="save-name">ذخیره</button>
+            </div>
+        </div>
+        <div class="content-card">
+            <h4 class="card-title">رکوردهای اخیر</h4>
+            <div data-bind="profile-records"></div>
+        </div>
+    </section>
+
+    <section id="screen-settings" class="screen">
+        <header class="topbar">
+            <button class="back-btn" data-nav="home">➔</button>
+            <h2 class="screen-title">تنظیمات</h2>
+            <div style="width:44px"></div>
+        </header>
+        <div class="content-card">
+            <div class="setting-row">
+                <span>صدای بازی</span>
+                <button class="switch" data-toggle="sound"></button>
+            </div>
+            <div class="setting-row">
+                <span>لرزش (Haptics)</span>
+                <button class="switch" data-toggle="haptics"></button>
+            </div>
+        </div>
+        <div class="content-card" style="text-align: center;">
+            <button class="btn danger" data-action="reset">حذف تمام داده‌ها</button>
+        </div>
+    </section>
+
+    <section id="screen-about" class="screen">
+        <header class="topbar">
+            <button class="back-btn" data-nav="home">➔</button>
+            <h2 class="screen-title">درباره ما</h2>
+            <div style="width:44px"></div>
+        </header>
+        <div class="content-card center-text">
+            <div style="font-size: 60px; margin-bottom: 15px;">🎮</div>
+            <h3 style="color: var(--accent); margin-bottom: 10px;">Nexus Arcade</h3>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.8;">
+                مجموعه‌ای از بهترین بازی‌های سبک و مهارتی با تمرکز بر سرعت، کیفیت و رقابت. 
+            </p>
+        </div>
+        <div class="content-card">
+            <h4 class="card-title">تیم توسعه</h4>
+            <div class="dev-row">
+                <span>توسعه‌دهنده:</span>
+                <a href="https://splus.ir/none313" target="_blank">@none313</a>
+            </div>
+            <div class="dev-row">
+                <span>مدیریت:</span>
+                <a href="https://splus.ir/fiioz" target="_blank">@fiioz</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="screen-lobby" class="screen">
+        <header class="topbar">
+            <button class="back-btn" data-nav="home">➔</button>
+            <h2 class="screen-title" data-bind="lobby-title">بازی</h2>
+            <div style="width:44px"></div>
+        </header>
+        <div class="lobby-hero">
+            <div class="lobby-icon" data-bind="lobby-icon">🎮</div>
+            <h2 data-bind="lobby-name">بازی</h2>
+            <p data-bind="lobby-desc">توضیحات بازی</p>
+        </div>
+        <div class="lobby-actions">
+            <button class="btn primary large" data-action="play">شروع بازی</button>
+            <button class="btn secondary" data-action="about-game">نحوه بازی</button>
+            <button class="btn secondary" data-action="game-lb">جدول امتیازات</button>
+        </div>
+        <div class="content-card" data-bind="lobby-extra"></div>
+    </section>
+
+    <section id="screen-play" class="screen">
+        <header class="topbar game-topbar">
+            <button class="back-btn" data-action="quit">➔</button>
+            <h2 class="screen-title" data-bind="play-title">بازی</h2>
+            <div style="width:44px"></div>
+        </header>
+        
+        <div class="game-viewport" id="game-viewport">
+            <canvas id="game-canvas"></canvas>
+            <div class="game-hud" data-bind="hud"></div>
+            <div class="game-overlay" id="game-overlay"></div>
+        </div>
+        
+        <div class="game-controls-panel" id="game-controls"></div>
+    </section>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-nav="home"><span class="nav-icon">🏠</span><span>خانه</span></button>
+        <button class="nav-item" data-nav="leaderboard"><span class="nav-icon">🏆</span><span>رتبه‌بندی</span></button>
+        <button class="nav-item" data-nav="profile"><span class="nav-icon">👤</span><span>پروفایل</span></button>
+        <button class="nav-item" data-nav="settings"><span class="nav-icon">⚙️</span><span>تنظیمات</span></button>
+        <button class="nav-item" data-nav="about"><span class="nav-icon">ℹ️</span><span>درباره</span></button>
+    </nav>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>if(window.eruda) eruda.init();</script>
 <script src="firebase-config.js"></script>
 <script src="boot.js"></script>
 </body>
