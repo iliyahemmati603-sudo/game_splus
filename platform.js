@@ -52,7 +52,7 @@ const AudioEngine = {
 const Haptics = { enabled: true, light() { if (this.enabled && navigator.vibrate) navigator.vibrate(8); }, medium() { if (this.enabled && navigator.vibrate) navigator.vibrate(20); }, heavy() { if (this.enabled && navigator.vibrate) navigator.vibrate([30, 20, 40]); }, success() { if (this.enabled && navigator.vibrate) navigator.vibrate([15, 30, 15]); } };
 
 const Storage = {
-    key: 'nexus_arcade_v11',
+    key: 'nexus_arcade_v12',
     data: { uid: null, name: 'بازیکن', coins: 0, gamesPlayed: 0, best: {}, totalBest: 0, settings: { sound: true, haptics: true } },
     load() {
         try {
