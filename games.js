@@ -146,7 +146,11 @@ let sx=0,sy=0;this._d=e=>{sx=e.clientX;sy=e.clientY;};
 this._u=e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
 if(Math.abs(dx)>Math.abs(dy))this.applyDir(dx>0?1:-1,0);else this.applyDir(0,dy>0?1:-1);};
 this.canvas.addEventListener('pointerdown',this._d);window.addEventListener('pointerup',this._u);}
-applyDir(dx,dy){if(dx===-this.dir.x&&dy===-this.dir.y)return;this.nextDir={x:dx,y:dy};}
+applyDir(dx,dy){
+if(dx===-this.dir.x&&dy===-this.dir.y)return;
+if(dx!==0&&this.dir.x!==0)return;
+if(dy!==0&&this.dir.y!==0)return;
+this.nextDir={x:dx,y:dy};}
 layout(){this.cell=Math.floor(Math.min((this.w-20)/20,(this.h-190)/24));this.ox=(this.w-this.cols*this.cell)/2;this.oy=60+(this.h-190-this.rows*this.cell)/2;}
 reset(){this.snake=[{x:9,y:12},{x:8,y:12},{x:7,y:12}];this.dir={x:1,y:0};this.nextDir={x:1,y:0};
 this.acc=0;this.step=0.14;this.score=0;this.food=this.newFood();this.grow=0;this.hue=0;
@@ -193,6 +197,49 @@ this.canvas.removeEventListener('pointerdown',this._d);window.removeEventListene
 if(this._dpEl)this._dpEl.removeEventListener('pointerdown',this._dpHandler);}
 };
 
+this.games.pong=class extends Base{
+init(){this.ph=52;this.pw=9;
+this.p1={x:15,y:this.h/2-this.ph/2};
+this.p2={x:this.w-24,y:this.h/2-this.ph/2};
+this.s1=0;this.s2=0;
+this.ball={x:this.w/2,y:this.h/2,vx:280,vy:rand(-125,125),r:7};
+this.ai=4.2;
+this.setHud('<div class="pill">شما <b>0</b></div><div class="pill">حریف <b>0</b></div>');
+const dp=document.getElementById('dpad');dp.classList.add('on');
+this._dpHandler=e=>{e.preventDefault();const b=e.target.closest('button');if(!b)return;
+if(b.dataset.dir==='left')this.p1.y=clamp(this.p1.y-40,55,this.h-this.ph);
+if(b.dataset.dir==='right')this.p1.y=clamp(this.p1.y+40,55,this.h-this.ph);};
+dp.addEventListener('pointerdown',this._dpHandler);this._dpEl=dp;
+this._m=e=>{const r=this.canvas.getBoundingClientRect();this.p1.y=clamp(e.clientY-r.top-this.ph/2,55,this.h-this.ph);};
+this._k=e=>{if(e.key==='ArrowUp'||e.key==='w'){e.preventDefault();this.p1.y=clamp(this.p1.y-35,55,this.h-this.ph);}
+if(e.key==='ArrowDown'||e.key==='s'){e.preventDefault();this.p1.y=clamp(this.p1.y+35,55,this.h-this.ph);}};
+this.canvas.addEventListener('pointermove',this._m);window.addEventListener('keydown',this._k);}
+setHud(h){if(this.hudEl.innerHTML!==h)this.hudEl.innerHTML=h;}
+reset(){this.ball.x=this.w/2;this.ball.y=this.h/2;this.ball.vx=rand([-300,300]);this.ball.vy=rand(-135,135);this.Snd.t(300,0.06,'sine',0.06);}
+update(dt){if(this.state!=='playing')return;const b=this.ball;b.x+=b.vx*dt;b.y+=b.vy*dt;
+if(b.y-b.r<55){b.y=b.r+55;b.vy*=-1;}
+if(b.y+b.r>this.h){b.y=this.h-b.r;b.vy*=-1;}
+if(b.x-b.r<this.p1.x+this.pw&&b.y>this.p1.y&&b.y<this.p1.y+this.ph){b.vx=Math.abs(b.vx);this.Snd.t(620,0.035,'square',0.06);}
+if(b.x+b.r>this.p2.x&&b.y>this.p2.y&&b.y<this.p2.y+this.ph){b.vx=-Math.abs(b.vx);this.Snd.t(620,0.035,'square',0.06);}
+const predY=b.y+(b.vy*Math.abs((this.p2.x-b.x)/Math.max(1,Math.abs(b.vx))));
+this.p2.y=lerp(this.p2.y,predY-this.ph/2,dt*this.ai);this.p2.y=clamp(this.p2.y,55,this.h-this.ph);
+if(b.x<0){this.s2++;this.setHud(`<div class="pill">شما <b>${this.s1}</b></div><div class="pill">حریف <b>${this.s2}</b></div>`);this.reset();}
+if(b.x>this.w){this.s1++;this.setHud(`<div class="pill">شما <b>${this.s1}</b></div><div class="pill">حریف <b>${this.s2}</b></div>`);this.reset();}
+if(this.s1>=5||this.s2>=5){this.state='over';this.Snd.lose();this.Hap.heavy();setTimeout(()=>this.finish(),550);}}
+render(){const c=this.ctx;const bg=c.createLinearGradient(0,0,this.w,0);
+bg.addColorStop(0,'#0a1628');bg.addColorStop(0.5,'#1a0a2e');bg.addColorStop(1,'#0a1628');
+c.fillStyle=bg;c.fillRect(0,0,this.w,this.h);
+c.fillStyle='#00e5ff';c.fillRect(this.p1.x,this.p1.y,this.pw,this.ph);
+c.fillStyle='#ff2d78';c.fillRect(this.p2.x,this.p2.y,this.pw,this.ph);
+c.fillStyle='#fff';c.shadowColor='#ffc531';c.shadowBlur=14;
+c.beginPath();c.arc(this.ball.x,this.ball.y,this.ball.r,0,TAU);c.fill();c.shadowBlur=0;
+c.strokeStyle='rgba(255,255,255,0.06)';c.setLineDash([8,10]);
+c.beginPath();c.moveTo(this.w/2,55);c.lineTo(this.w/2,this.h);c.stroke();c.setLineDash([]);}
+destroy(){super.destroy();document.getElementById('dpad').classList.remove('on');
+if(this._dpEl)this._dpEl.removeEventListener('pointerdown',this._dpHandler);
+this.canvas.removeEventListener('pointermove',this._m);window.removeEventListener('keydown',this._k);}
+};
+
 this.games.lumberjack=class extends Base{
 init(){this.tx=this.w/2;this.tw=Math.min(this.w*0.18,70);this.trunkTop=this.h*0.2;this.groundY=this.h*0.78;
 this.bh=Math.min(50,this.h*0.07);this.side=0;this.chopT=0;this.timer=1;this.drain=0.25;this.score=0;
@@ -206,7 +253,7 @@ this._k=e=>{if(e.key==='ArrowLeft'||e.key==='a'){e.preventDefault();this.chop(-1
 if(e.key==='ArrowRight'||e.key==='d'){e.preventDefault();this.chop(1);}};
 window.addEventListener('keydown',this._k);}
 initB(){this.branches=[];for(let i=0;i<20;i++){const r=Math.random();let s=0;
-if(r<0.4)s=Math.random()<0.5?-1:1;this.branches.push({side:s,y:this.trunkTop+i*this.bh,life:1});}
+if(r<0.4)s=Math.random()<0.5?-1:1;this.branches.push({side:s,y:this.trunkTop+i*this.bh});}
 this.branches[0].side=0;this.branches[1].side=0;}
 chop(side){if(this.state!=='playing')return;this.side=side;this.chopT=0.12;const nb=this.branches[1];
 if(nb&&nb.side===side){this.state='over';this.Snd.hit();this.Hap.heavy();this.Cam.add(1.4);
@@ -214,7 +261,7 @@ setTimeout(()=>this.finish('شاخه خوردی!',`امتیاز: ${this.score}`)
 this.score++;this.timer=Math.min(1,this.timer+0.1);this.drain=Math.min(0.7,0.25+this.score*0.003);
 this.branches.shift();const lastY=this.branches.length?this.branches[this.branches.length-1].y:this.trunkTop;
 const r=Math.random();let ns=0;if(r<0.4)ns=Math.random()<0.5?-1:1;
-this.branches.push({side:ns,y:lastY+this.bh,life:1});
+this.branches.push({side:ns,y:lastY+this.bh});
 this.Snd.chop();this.Hap.med();this.Cam.add(0.06);
 this.setHud(`<div class="pill">امتیاز <b>${this.score}</b></div><div class="pill">⏱ <b>${Math.ceil(this.timer*100)}%</b></div>`);}
 update(dt){if(this.state!=='playing')return;if(this.chopT>0)this.chopT=Math.max(0,this.chopT-dt);
@@ -240,38 +287,6 @@ c.fillStyle=this.timer<0.3?'#ff2d78':'#2bff88';c.fillRect(this.w*0.1,55,this.w*0
 destroy(){super.destroy();document.getElementById('dpad').classList.remove('on');
 if(this._dpEl)this._dpEl.removeEventListener('pointerdown',this._dpHandler);
 window.removeEventListener('keydown',this._k);}
-};
-
-this.games.pong=class extends Base{
-init(){this.ph=52;this.pw=9;this.p1={x:15,y:this.h/2-this.ph/2};this.p2={x:this.w-24,y:this.h/2-this.ph/2};
-this.s1=0;this.s2=0;this.ball={x:this.w/2,y:this.h/2,vx:280,vy:rand(-125,125),r:7};this.ai=3.8;
-this.setHud('<div class="pill">شما <b>0</b></div><div class="pill">حریف <b>0</b></div>');
-this._m=e=>{const r=this.canvas.getBoundingClientRect();this.p1.y=clamp(e.clientY-r.top-this.ph/2,55,this.h-this.ph);};
-this._k=e=>{if(e.key==='ArrowUp'||e.key==='w'){e.preventDefault();this.p1.y=clamp(this.p1.y-30,55,this.h-this.ph);}
-if(e.key==='ArrowDown'||e.key==='s'){e.preventDefault();this.p1.y=clamp(this.p1.y+30,55,this.h-this.ph);}};
-this.canvas.addEventListener('pointermove',this._m);window.addEventListener('keydown',this._k);}
-setHud(h){if(this.hudEl.innerHTML!==h)this.hudEl.innerHTML=h;}
-reset(){this.ball.x=this.w/2;this.ball.y=this.h/2;this.ball.vx=rand([-300,300]);this.ball.vy=rand(-135,135);this.Snd.t(300,0.06,'sine',0.06);}
-update(dt){if(this.state!=='playing')return;const b=this.ball;b.x+=b.vx*dt;b.y+=b.vy*dt;
-if(b.y-b.r<55){b.y=b.r+55;b.vy*=-1;}
-if(b.y+b.r>this.h){b.y=this.h-b.r;b.vy*=-1;}
-if(b.x-b.r<this.p1.x+this.pw&&b.y>this.p1.y&&b.y<this.p1.y+this.ph){b.vx=Math.abs(b.vx);this.Snd.t(620,0.035,'square',0.06);}
-if(b.x+b.r>this.p2.x&&b.y>this.p2.y&&b.y<this.p2.y+this.ph){b.vx=-Math.abs(b.vx);this.Snd.t(620,0.035,'square',0.06);}
-const predY=b.y+(b.vy*Math.abs((this.p2.x-b.x)/Math.max(1,Math.abs(b.vx))));
-this.p2.y=lerp(this.p2.y,predY-this.ph/2,dt*this.ai);this.p2.y=clamp(this.p2.y,55,this.h-this.ph);
-if(b.x<0){this.s2++;this.setHud(`<div class="pill">شما <b>${this.s1}</b></div><div class="pill">حریف <b>${this.s2}</b></div>`);this.reset();}
-if(b.x>this.w){this.s1++;this.setHud(`<div class="pill">شما <b>${this.s1}</b></div><div class="pill">حریف <b>${this.s2}</b></div>`);this.reset();}
-if(this.s1>=5||this.s2>=5){this.state='over';this.Snd.lose();this.Hap.heavy();setTimeout(()=>this.finish(),550);}}
-render(){const c=this.ctx;const bg=c.createLinearGradient(0,0,this.w,0);
-bg.addColorStop(0,'#0a1628');bg.addColorStop(0.5,'#1a0a2e');bg.addColorStop(1,'#0a1628');
-c.fillStyle=bg;c.fillRect(0,0,this.w,this.h);
-c.fillStyle='#00e5ff';c.fillRect(this.p1.x,this.p1.y,this.pw,this.ph);
-c.fillStyle='#ff2d78';c.fillRect(this.p2.x,this.p2.y,this.pw,this.ph);
-c.fillStyle='#fff';c.shadowColor='#ffc531';c.shadowBlur=14;
-c.beginPath();c.arc(this.ball.x,this.ball.y,this.ball.r,0,TAU);c.fill();c.shadowBlur=0;
-c.strokeStyle='rgba(255,255,255,0.06)';c.setLineDash([8,10]);
-c.beginPath();c.moveTo(this.w/2,55);c.lineTo(this.w/2,this.h);c.stroke();c.setLineDash([]);}
-destroy(){super.destroy();this.canvas.removeEventListener('pointermove',this._m);window.removeEventListener('keydown',this._k);}
 };
 
 this.games.tetris=class extends Base{
@@ -1080,7 +1095,7 @@ destroy(){super.destroy();this.canvas.removeEventListener('pointerdown',this._d)
 
 this.games.clicker=class extends Base{
 init(){this.coins=0;this.cp=1;this.ap=0;this.at=0;this.cc=15;this.ac=50;
-this.cx=this.w/2;this.cy=this.h*0.3;this.cr=Math.min(this.w,this.h)*0.12;this.pu=0;this.hud();
+this.cx=this.w/2;this.cy=this.h*0.3;this.cr=Math.min(this.w,this.h)*0.14;this.pu=0;this.hud();
 this._c=e=>{if(this.state!=='playing')return;
 const r=this.canvas.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
 const bw=(this.w-54)/2,bh=68,by=this.h-150;
