@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#060912">
-<title>NEXUS ARCADE — 21 Games</title>
+<meta name="theme-color" content="#0a0e1a">
+<title>NEXUS ARCADE — 21 Mini Games</title>
 <style>
 :root{--bg:#060912;--cyan:#00e5ff;--pink:#ff2d78;--gold:#ffc531;--green:#2bff88;--purple:#a855f7;--text:#e8f4ff;--muted:#5f7a99;--border:rgba(0,229,255,.16);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -39,6 +39,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .pill{background:rgba(6,10,20,.8);border:1px solid rgba(0,229,255,.24);border-radius:999px;padding:3px 10px;font-size:10px;color:#bfe9ff;white-space:nowrap;display:flex;align-items:center;gap:3px}
 .pill b{color:#fff;font-size:11px}
 #back{position:absolute;top:calc(7px + var(--st));right:7px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,229,255,.3);background:rgba(5,8,16,.82);color:var(--cyan);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#console-btn{position:absolute;top:calc(7px + var(--st));right:50px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,197,49,.4);background:rgba(5,8,16,.82);color:var(--gold);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#console-panel{position:absolute;top:calc(48px + var(--st));right:7px;left:7px;z-index:35;max-height:50vh;background:rgba(2,4,8,.97);border:1px solid rgba(255,197,49,.3);border-radius:12px;display:none;flex-direction:column;overflow:hidden;font-family:monospace}
+#console-panel.show{display:flex}
+#console-header{padding:6px 10px;background:rgba(255,197,49,.1);border-bottom:1px solid rgba(255,197,49,.2);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--gold)}
+#console-body{padding:6px 8px;overflow-y:auto;font-size:9px;line-height:1.5;direction:ltr;text-align:left;max-height:42vh}
+#console-body::-webkit-scrollbar{width:3px}
+#console-body::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
+.log-line{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-error{color:#ff2d78}
+.log-warn{color:#ffc531}
+.log-info{color:#00e5ff}
 #over{position:absolute;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:20px;background:rgba(2,4,8,.94);text-align:center}
 #over.show{display:flex}
 #over .bd{font-size:8px;letter-spacing:3px;color:var(--muted)}
@@ -71,9 +82,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .lb-sub{font-size:9px;color:var(--muted)}
 .lb-sc{font-size:13px;font-weight:900;color:var(--gold)}
 .close-x{position:absolute;top:10px;left:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:none;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.dpad{position:absolute;bottom:calc(18px + var(--sb));left:50%;transform:translateX(-50%);z-index:25;display:none;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:3px;pointer-events:none}
+.dpad{position:absolute;bottom:calc(18px + var(--sb));left:50%;transform:translateX(-50%);z-index:25;display:none;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:3px;pointer-events:none}
 .dpad.on{display:grid}
-.dpad button{pointer-events:auto;width:52px;height:52px;border-radius:14px;border:2px solid rgba(0,229,255,.35);background:rgba(6,12,24,.82);color:var(--cyan);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 12px rgba(0,229,255,.15)}
+.dpad button{pointer-events:auto;width:54px;height:54px;border-radius:14px;border:2px solid rgba(0,229,255,.35);background:rgba(6,12,24,.82);color:var(--cyan);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 12px rgba(0,229,255,.15)}
 .dpad button:active{background:rgba(0,229,255,.25);transform:scale(.92)}
 .dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}.dpad .right{grid-column:3;grid-row:2}.dpad .down{grid-column:2;grid-row:3}
 </style>
@@ -93,6 +104,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 <canvas id="cv"></canvas>
 <div id="hud"></div>
 <button id="back">✕</button>
+<button id="console-btn" onclick="toggleConsole()">◉</button>
+<div id="console-panel">
+<div id="console-header"><span>CONSOLE</span><span style="cursor:pointer" onclick="clearConsole()">CLEAR</span></div>
+<div id="console-body"></div>
+</div>
 <div class="dpad" id="dpad">
 <button class="up" data-dir="up">▲</button>
 <button class="left" data-dir="left">◀</button>
@@ -111,7 +127,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 <script src="games.js"></script>
 <script>
 'use strict';
-const DB={key:'nx_pro_v12',data:null,
+const DB={key:'nx_pro_v15',data:null,
 load(){try{this.data=JSON.parse(localStorage.getItem(this.key)||'{}');}catch(e){this.data={};}
 this.data.profile=this.data.profile||{name:'بازیکن',avatar:'',id:'g_'+Math.random().toString(36).slice(2,9)};
 this.data.best=this.data.best||{};this.data.plays=this.data.plays||0;
